@@ -1,6 +1,7 @@
 import { createClient, commandOptions } from "redis";
 import { downloadS3Folder, removeSourceCodeFromS3 } from "./aws";
 import { buildProject, copyFinalDist, removeSourceCode } from "./utils";
+import { screenshotPage } from "./metrics";
 
 const subscriber = createClient();
 const publisher = createClient();
@@ -24,6 +25,12 @@ async function processTask(queueName: string, id: string) {
         
         console.log(`[${queueName}] Processing complete for ID: ${id}`);
         await publisher.hSet("status", id, "deployed");
+
+        // take a screenshot of the HomePage of the deployed project
+        const values = await screenshotPage(`https://${id}/${process.env.HOSTNAME}/`, id )
+        if(!values.error){
+            // TODO -- save screenshot and update status to DB
+        }
     } catch (error) {
         console.error(`[${queueName}] Error processing ID: ${id}`, error);
         await publisher.hSet("status", id, "failed");

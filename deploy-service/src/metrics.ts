@@ -1,21 +1,11 @@
-const express = require("express");
 const puppeteer = require("puppeteer");
 const path = require("path");
-
-const app = express();
-const PORT = 5002;
-
-// Middleware to parse JSON
-app.use(express.json());
-
-/**
- * Endpoint to capture screenshot and get status of a website
- */
-app.post("/screenshot", async (req, res) => {
-    const { url } = req.body;
+ 
+ 
+ export async function screenshotPage(url : string, id : string) {
 
     if (!url) {
-        return res.status(400).json({ error: "URL is required in the request body." });
+        return { msg: "URL is required in the request body." , error : true}
     }
 
     try {
@@ -36,25 +26,21 @@ app.post("/screenshot", async (req, res) => {
         await page.goto(url, { waitUntil: "networkidle2" });
 
         // Take a screenshot
-        const screenshotPath = path.join(__dirname, "screenshots", `${Date.now()}.png`);
+        const screenshotPath = path.join(__dirname, "screenshots", `${id}_${Date.now()}.png`);
         await page.screenshot({ path: screenshotPath });
 
         // Close the browser
         await browser.close();
 
         // Send response
-        res.json({
-            url,
+        return {
             status,
-            screenshot: `Screenshot saved at ${screenshotPath}`,
-        });
+            screenshot: screenshotPath,
+        };
     } catch (error) {
         console.error("Error:", error);
-        res.status(500).json({ error: "An error occurred while processing the request." });
+        return { msg: "An error occurred while processing the request." , error : true}
     }
-});
-
-// Start the server
-app.listen(PORT, () => {
-    console.log(`Screenshot service is running on http://localhost:${PORT}`);
-});
+ }
+ 
+ 
