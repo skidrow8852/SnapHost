@@ -1,0 +1,22 @@
+{
+  "dependencies": {
+    "@types/express": "^5.0.0",
+    "aws-sdk": "^2.1692.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "redis": "^4.7.0",
+    "simple-git": "^3.27.0"
+  },
+  "name": "vercel-clone",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc && nodemon dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
