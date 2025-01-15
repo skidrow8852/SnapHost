@@ -1,12 +1,13 @@
-import express from "express"
+import express from "express";
 import { S3 } from "aws-sdk";
 
 const s3 = new S3({
-    accessKeyId : process.env.ACCESS_KEY_ID,
-    secretAccessKey : process.env.SECRET_ACCESS_KEY,
-    endpoint: process.env.ENDPOINT
-})
-const app = express()
+    accessKeyId: process.env.ACCESS_KEY_ID,
+    secretAccessKey: process.env.SECRET_ACCESS_KEY,
+    endpoint: process.env.ENDPOINT,
+});
+
+const app = express();
 
 app.get("/*", async (req, res) => {
     try {
@@ -14,50 +15,85 @@ app.get("/*", async (req, res) => {
         const id = host.split(".")[0];
         let filePath = req.path;
 
+        // Default to index.html if the path is empty
         if (filePath == "/" || !filePath.includes(".")) {
-                filePath = "/index.html";
-            }
+            filePath = "/index.html";
+        }
 
-        const contents = await s3.getObject({
-            Bucket : "builds",
-            Key : `dist/${id}${filePath}`
-        }).promise();
+        // Try fetching from the dist folder first
+        let contents = await getS3Object(id, filePath, "dist");
+
+        // If the file was not found in the dist folder, try the build folder
+        if (!contents) {
+            console.log(`File not found in dist. Trying build folder for ${filePath}`);
+            contents = await getS3Object(id, filePath, "build");
+        }
+
+        // If the file still wasn't found, return 404
+        if (!contents) {
+            return res.status(404).send("File not found.");
+        }
+
+        // Set the appropriate content type based on file extension
         const mimeTypes = {
-                ".html": "text/html",
-                ".css": "text/css",
-                ".js": "application/javascript",
-                ".json": "application/json",
-                ".png": "image/png",
-                ".jpg": "image/jpeg",
-                ".jpeg": "image/jpeg",
-                ".gif": "image/gif",
-                ".svg": "image/svg+xml",
-                ".ico": "image/x-icon",
-                ".mp4": "video/mp4",
-                ".webm": "video/webm",
-                ".ttf": "font/ttf",
-                ".woff": "font/woff",
-                ".woff2": "font/woff2",
-                ".otf": "font/otf",
-                ".eot": "application/vnd.ms-fontobject",
-                ".txt": "text/plain"
-            };
+            ".html": "text/html",
+            ".css": "text/css",
+            ".js": "application/javascript",
+            ".json": "application/json",
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".svg": "image/svg+xml",
+            ".ico": "image/x-icon",
+            ".mp4": "video/mp4",
+            ".webm": "video/webm",
+            ".ttf": "font/ttf",
+            ".woff": "font/woff",
+            ".woff2": "font/woff2",
+            ".otf": "font/otf",
+            ".eot": "application/vnd.ms-fontobject",
+            ".txt": "text/plain",
+        };
+
         const fileExtension = filePath.slice(filePath.lastIndexOf("."));
         const contentType = mimeTypes[fileExtension] || "application/octet-stream";
 
         res.set("Content-Type", contentType);
-        res.send(contents.Body)
+        res.send(contents.Body);
 
-    }catch (error) {
+    } catch (error) {
         console.error("Error fetching file from S3:", error);
 
         // Handle cases where the file is not found
         if (error.code === "NoSuchKey") {
             return res.status(404).send("File not found.");
         }
+
+        // Generic error handler
         res.status(500).send("An error occurred while processing the request.");
     }
+});
 
-})
+// Helper function to fetch object from S3
+async function getS3Object(id : string, filePath : string, folder : string) {
+    try {
+        const response = await s3
+            .getObject({
+                Bucket: "builds",
+                Key: `${id}/${folder}${filePath}`,
+            })
+            .promise();
 
-app.listen(5001)
+        return response;
+    } catch (error) {
+        if (error.code === "NoSuchKey") {
+            return null; // File not found in this folder, return null to try the next folder
+        }
+        throw error; // Rethrow error if it's something unexpected
+    }
+}
+
+app.listen(5001, () => {
+    console.log("Server is running on port 5001");
+});
