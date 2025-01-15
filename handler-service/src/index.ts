@@ -1,13 +1,13 @@
-import express from "express";
-import { S3 } from "aws-sdk";
 
+import express from "express"
+import { S3 } from "aws-sdk";
 const s3 = new S3({
     accessKeyId: process.env.ACCESS_KEY_ID,
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
     endpoint: process.env.ENDPOINT,
 });
 
-const app = express();
+const app = express() as any;
 
 app.get("/*", async (req, res) => {
     try {
@@ -65,12 +65,10 @@ app.get("/*", async (req, res) => {
     } catch (error) {
         console.error("Error fetching file from S3:", error);
 
-        // Handle cases where the file is not found
         if (error.code === "NoSuchKey") {
             return res.status(404).send("File not found.");
         }
 
-        // Generic error handler
         res.status(500).send("An error occurred while processing the request.");
     }
 });
@@ -88,9 +86,9 @@ async function getS3Object(id : string, filePath : string, folder : string) {
         return response;
     } catch (error) {
         if (error.code === "NoSuchKey") {
-            return null; // File not found in this folder, return null to try the next folder
+            return null; 
         }
-        throw error; // Rethrow error if it's something unexpected
+        throw error; 
     }
 }
 

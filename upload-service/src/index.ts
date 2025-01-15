@@ -1,4 +1,5 @@
-import express , {Request, Response} from "express";
+const express = require("express");
+
 import cors from "cors";
 import simpleGit from "simple-git";
 import path from "path";
@@ -27,7 +28,7 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
     try {
         // Clone repository (overwrite if redeploying)
         console.log(`${isRedeploy ? "Redeploying" : "Deploying"} project: ${id}`);
-        await simpleGit().clone(repoUrl, outputPath, { "--force": isRedeploy });
+        await simpleGit().clone(repoUrl, outputPath, { '--force': isRedeploy ? 'true' : 'false' });
 
         // Upload files to S3
         const files = getAllFiles(outputPath);
@@ -46,7 +47,7 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
 
 
 // Deploy a project
-app.post("/deploy", async (req : Request, res : Response) => {
+app.post("/deploy", async (req, res) => {
     try {
         const { repoUrl, userId } = req.body;
 
@@ -82,7 +83,7 @@ app.post("/deploy", async (req : Request, res : Response) => {
 
 
 // Get the status of a project deployment
-app.get("/status/:id", async (req : Request, res : Response) => {
+app.get("/status/:id", async (req , res) => {
     try {
         const id = req.params.id as string;
         const status = await subscriber.hGet("status", id) || await subscriber.hGet("redeploy-status", id);
@@ -94,7 +95,7 @@ app.get("/status/:id", async (req : Request, res : Response) => {
 });
 
 // Redeploy an existing project
-app.post("/redeploy", async (req : Request, res : Response) => {
+app.post("/redeploy", async (req, res ) => {
     try {
         const id = req.body.id;
         const repoUrl = req.body.repoUrl;
@@ -115,7 +116,7 @@ app.post("/redeploy", async (req : Request, res : Response) => {
 });
 
 // Get all deployed projects for a user (TODO: Add user identification logic)
-app.get("/projects/:userId", async (req : Request, res : Response) => {
+app.get("/projects/:userId", async (req, res) => {
     try {
         const userId = req.params.userId;
 
