@@ -19,7 +19,7 @@ app.get("/*", async (req, res) => {
             }
 
         const contents = await s3.getObject({
-            Bucket : "vercel",
+            Bucket : "builds",
             Key : `dist/${id}${filePath}`
         }).promise();
         const mimeTypes = {

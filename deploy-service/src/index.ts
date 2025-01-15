@@ -1,6 +1,6 @@
 import { createClient, commandOptions } from "redis";
-import { downloadS3Folder } from "./aws";
-import { buildProject, copyFinalDist } from "./utils";
+import { downloadS3Folder, removeSourceCodeFromS3 } from "./aws";
+import { buildProject, copyFinalDist, removeSourceCode } from "./utils";
 
 const subscriber = createClient();
 const publisher = createClient();
@@ -15,6 +15,12 @@ async function processTask(queueName: string, id: string) {
         // Build and copy final distribution
         await buildProject(id);
         await copyFinalDist(id);
+
+         // Remove source code after build from machine
+        await removeSourceCode(id);
+
+        // Remove source code after build from S3 (except dist or build folders)
+        await removeSourceCodeFromS3(id);
         
         console.log(`[${queueName}] Processing complete for ID: ${id}`);
         await publisher.hSet("status", id, "deployed");
