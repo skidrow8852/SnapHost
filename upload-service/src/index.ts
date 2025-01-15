@@ -23,8 +23,10 @@ app.post("/deploy", async(req,res) => {
     files?.forEach(async file => {
         await uploadFile(file.slice(__dirname.length + 1), file)
     })
-    publisher.lPush("build-queue", id)
+    publisher.lPush("build-queue", id);
+    
+    publisher.hSet("status", id, "uploaded")
     res.json({id, files})
 })
 
-app.listen(3000)
+app.listen(5000)
