@@ -9,6 +9,7 @@ const s3 = new S3({
     endpoint: process.env.ENDPOINT
 })
 
+// download files from S3 folder
 export async function downloadS3Folder(pathId : string) {
     const allFiles = await s3.listObjectsV2({
         Bucket : "builds",
@@ -53,7 +54,7 @@ export const uploadFile = async (fileName: string, localFilePath: string) => {
     console.log(response);
 }
 
-
+// Remove source code from S3 folder
 export async function removeSourceCodeFromS3(id : string) {
     const prefix = `output/${id}/`; 
     

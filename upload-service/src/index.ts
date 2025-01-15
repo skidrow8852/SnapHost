@@ -24,21 +24,26 @@ app.use(express.json());
 const deployProject = async (id: string, repoUrl: string, isRedeploy = false) => {
     const outputPath = path.join(__dirname, `output/${id}`);
 
-    // Clone repository (overwrite if redeploying)
-    console.log(`${isRedeploy ? "Redeploying" : "Deploying"} project: ${id}`);
-    await simpleGit().clone(repoUrl, outputPath, { "--force": isRedeploy });
+    try {
+        // Clone repository (overwrite if redeploying)
+        console.log(`${isRedeploy ? "Redeploying" : "Deploying"} project: ${id}`);
+        await simpleGit().clone(repoUrl, outputPath, { "--force": isRedeploy });
 
-    // Upload files to S3
-    const files = getAllFiles(outputPath);
-    for (const file of files) {
-        const relativePath = file.slice(__dirname.length + 1);
-        await uploadFile(relativePath, file);
+        // Upload files to S3
+        const files = getAllFiles(outputPath);
+        for (const file of files) {
+            const relativePath = file.slice(__dirname.length + 1);
+            await uploadFile(relativePath, file);
+        }
+
+        console.log(`${isRedeploy ? "Redeployment" : "Deployment"} complete for project: ${id}`);
+        const statusKey = isRedeploy ? "redeploy-status" : "status";
+        await publisher.hSet(statusKey, id, isRedeploy ? "redeployed" : "deployed");
+    } catch (error) {
+        console.error(`Error during ${isRedeploy ? "redeployment" : "deployment"} for project: ${id}`, error);
     }
-
-    console.log(`${isRedeploy ? "Redeployment" : "Deployment"} complete for project: ${id}`);
-    const statusKey = isRedeploy ? "redeploy-status" : "status";
-    await publisher.hSet(statusKey, id, isRedeploy ? "redeployed" : "deployed");
 };
+
 
 // Deploy a project
 app.post("/deploy", async (req : Request, res : Response) => {

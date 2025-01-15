@@ -1,52 +1,79 @@
 import { exec } from "child_process";
 import path from "path";
-import fs from "fs"
+import fs from "fs";
 import { uploadFile } from "./aws";
 
-export function buildProject(id : string) {
-    return new Promise((resolve) => {
-        const child = exec(`cd ${path.join(__dirname, `output/${id}`)} && npm install --force && npm run build`)
+// Build project function
+export function buildProject(id: string) {
+    return new Promise((resolve, reject) => {
+        const child = exec(`cd ${path.join(__dirname, `output/${id}`)} && npm install --force && npm run build`, (error, stdout, stderr) => {
+            if (error) {
+                reject(`Error during build: ${error.message}`);
+            } else if (stderr) {
+                reject(`stderr: ${stderr}`);
+            } else {
+                resolve(stdout);
+            }
+        });
 
-        child.stdout?.on('data', function(data) {
-            console.log('stdout : ', data)
-        })
-        child.stderr?.on('data', function(data) {
-            console.log('stderr : ', data)
-        })
+        child.stdout?.on('data', function (data) {
+            console.log('stdout : ', data);
+        });
 
-        child.on('close', function(code) {
-            resolve("")
-        })
-    })
+        child.stderr?.on('data', function (data) {
+            console.log('stderr : ', data);
+        });
+    });
 }
 
-const getAllFiles = (folderPath: string) => {
+// Helper to get all files in a directory recursively
+const getAllFiles = (folderPath: string): string[] => {
     let response: string[] = [];
 
-    const allFilesAndFolders = fs.readdirSync(folderPath);allFilesAndFolders.forEach(file => {
+    const allFilesAndFolders = fs.readdirSync(folderPath);
+    allFilesAndFolders.forEach(file => {
         const fullFilePath = path.join(folderPath, file);
-        if (fs.statSync(fullFilePath).isDirectory()) {
-            response = response.concat(getAllFiles(fullFilePath))
+        const isDirectory = fs.statSync(fullFilePath).isDirectory();
+
+        if (isDirectory) {
+            response = response.concat(getAllFiles(fullFilePath));
         } else {
             response.push(fullFilePath);
         }
     });
+
     return response;
-}
+};
 
+// Function to copy final dist or build folder files to S3
 export async function copyFinalDist(id: string) {
-    const folderPath = path.join(__dirname, `output/${id}/dist`);
-    const allFiles = getAllFiles(folderPath);
-    allFiles?.forEach(file => {
-        uploadFile(`dist/${id}/` + file.slice(folderPath.length + 1), file);
-    })
+    const distFolderPath = path.join(__dirname, `output/${id}/dist`);
+    const buildFolderPath = path.join(__dirname, `output/${id}/build`);
+    
+    // Determine which folder to copy: dist or build
+    const folderToUse = fs.existsSync(distFolderPath) ? distFolderPath : buildFolderPath;
+    const folderName = fs.existsSync(distFolderPath) ? "dist" : "build";
+
+    const allFiles = getAllFiles(folderToUse);
+
+    if (!allFiles.length) {
+        console.log(`No files found in ${folderName} for project ${id}`);
+        return;
+    }
+
+    for (const file of allFiles) {
+        try {
+            const relativePath = `${folderName}/${id}/` + file.slice(folderToUse.length + 1);
+            await uploadFile(relativePath, file);
+        } catch (error) {
+            console.error(`Failed to upload file ${file}:`, error);
+        }
+    }
 }
-
-
 
 // Helper to remove source code after build
-export async function removeSourceCode(id : string) {
-    const sourcePath = path.join(__dirname, "output", id); // Adjust the path as needed
+export async function removeSourceCode(id: string) {
+    const sourcePath = path.join(__dirname, "output", id); 
 
     // Check if source code folder exists
     if (fs.existsSync(sourcePath)) {
