@@ -11,3 +11,7 @@ deploy-service/dist
 handler-service/node_modules
 handler-service/.env
 handler-service/dist
+
+metrics-service/node_modules
+metrics-service/.env
+metrics-service/dist
