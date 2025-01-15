@@ -3,17 +3,15 @@ const express = require("express");
 import cors from "cors";
 import simpleGit from "simple-git";
 import path from "path";
-import { generate } from "./utils";
-import { getAllFiles } from "./file";
-import { uploadFile } from "./aws";
-import { createClient } from "redis";
-
-const publisher = createClient();
-const subscriber = createClient();
+import { generate } from "./utils/utils";
+import { getAllFiles } from "./utils/file";
+import { uploadFile } from "./utils/aws";
+const {publisher, subscriber, listener} = require("./database/redis")
 
 (async () => {
     await publisher.connect();
     await subscriber.connect();
+    await listener.connect()
     console.log("Connected to Redis");
 })();
 

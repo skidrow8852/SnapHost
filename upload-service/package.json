@@ -1,10 +1,15 @@
 {
   "dependencies": {
+    "@prisma/client": "^6.2.1",
     "aws-sdk": "^2.1692.0",
     "cors": "^2.8.5",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "prisma": "^6.2.1",
     "redis": "^4.7.0",
-    "simple-git": "^3.27.0"
+    "simple-git": "^3.27.0",
+    "uuid": "^11.0.5"
   },
   "name": "vercel-clone",
   "version": "1.0.0",
