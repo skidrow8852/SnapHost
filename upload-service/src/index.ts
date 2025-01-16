@@ -1,7 +1,5 @@
 import cors from "cors";
-import path from "path";
 import { generate } from "./utils/utils";
-import { getAllFiles } from "./utils/file";
 import { revokeToken, verifyUserAccessToken } from "./utils/verifyToken";
 import { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue} from "./utils/queue";
 import { prisma } from "./database/db";
