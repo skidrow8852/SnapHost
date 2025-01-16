@@ -110,6 +110,12 @@ process.on("SIGINT", async () => {
     process.exit(0);
 });
 
+process.on("SIGTERM", async () => {
+    console.log("Received SIGTERM. Exiting...");
+    await listener.disconnect();
+    process.exit(0);
+});
+
 app.listen(5001, () => {
     console.log("Server is running on port 5001");
 });

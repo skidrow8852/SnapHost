@@ -36,7 +36,6 @@ async function processTask(queueName: string, id: string, userId: string) {
     }
 }
 
-
 processDeployQueue.process(async (job) => {
     const { id, userId } = job.data;
     console.log(`Processing deployment for project: ${id}`);

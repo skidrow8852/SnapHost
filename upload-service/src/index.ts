@@ -121,6 +121,17 @@ process.on("SIGINT", async () => {
     process.exit(0);
 });
 
+process.on("SIGTERM", async () => {
+    console.log("Received SIGTERM. Exiting...");
+    await listener.disconnect();
+    await buildQueue.close();
+    await redeployQueue.close();
+    await resultQueue.close();
+    await processDeployQueue.close();
+    await processReDeployQueue.close();
+    process.exit(0);
+});
+
 // Start the server
 app.listen(5000, () => {
     console.log("Server is running on http://localhost:5000");
