@@ -1,3 +1,3 @@
 import { createClient } from "redis";
-
-export const listener = createClient();
+const url = process.env.REDIS_URL || 'redis://localhost:6379';
+export const listener = createClient({url});
