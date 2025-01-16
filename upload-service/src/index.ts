@@ -1,7 +1,7 @@
 import cors from "cors";
 import { generate } from "./utils/utils";
 import { revokeToken, verifyUserAccessToken } from "./utils/verifyToken";
-import { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue} from "./utils/queue";
+import { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue, processRemoveProject} from "./utils/queue";
 import { prisma } from "./database/db";
 import { getUserProjects } from "./client/client";
 const { listener } = require("./database/redis");
@@ -135,10 +135,10 @@ app.delete("/remove/user/:userId/project/:id", verifyUserAccessToken, async (req
             where: { id: req.params?.id },
         });
 
-
-        const redisKey = `pageViews:${project.id}`;
+        const redisKey = `pageViews:${project.projectId}`;
         res.status(200).json({ result: "Project deleted successfully" });
         await listener.del(redisKey);
+        await processRemoveProject.add({id : project.projectId})
 
     } catch (error) {
         console.error("Error fetching project status:", error);
@@ -171,6 +171,7 @@ const shutdown = async () => {
     await resultQueue.close();
     await processDeployQueue.close();
     await processReDeployQueue.close();
+    await processRemoveProject.close();
     process.exit(0);
 
 }

@@ -1,7 +1,7 @@
-import { downloadS3Folder, removeSourceCodeFromS3 } from "./aws";
+import { downloadS3Folder, removeProjectFolderFromS3, removeSourceCodeFromS3 } from "./aws";
 import { buildProject, copyFinalDist, removeSourceCode } from "./utils";
 import { screenshotPage } from "./metrics";
-import { resultQueue,processDeployQueue, processReDeployQueue} from "./queue"
+import { resultQueue,processDeployQueue, processReDeployQueue, processRemoveProject} from "./queue"
 
 async function processTask(queueName: string, id: string, userId: string, type : string) {
     try {
@@ -51,11 +51,19 @@ processReDeployQueue.process(async (job) => {
     
 });
 
+processRemoveProject.process(async (job) => {
+    const { id } = job.data;
+    console.log(`Processing removale for project folder: ${id}`);
+    await removeProjectFolderFromS3(id)
+    
+});
+
 const shutdown = async () => {
     console.log("Received shutdown. Exiting...");
     await resultQueue.close();
     await processDeployQueue.close();
     await processReDeployQueue.close();
+    await processRemoveProject.close();
     process.exit(0);
 }
 

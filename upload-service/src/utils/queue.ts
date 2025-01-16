@@ -14,6 +14,7 @@ const redeployQueue = new Queue("redeploy-queue", { redis: { host: process.env.R
 const resultQueue = new Queue("result-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
 const processDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
 const processReDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
+const processRemoveProject = new Queue("proccess-remove-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
 const io = require("../socket/socket");
 
 // Function to deploy or redeploy a project
@@ -166,4 +167,4 @@ resultQueue.process(async (job) => {
 });
 
 
-export { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue};
+export { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue,processRemoveProject};

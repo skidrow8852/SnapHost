@@ -93,3 +93,48 @@ export async function removeSourceCodeFromS3(id : string) {
         console.error("Error removing source code from S3:", error);
     }
 }
+
+
+// Remove the entire project folder
+export async function removeProjectFolderFromS3(projectId: string) {
+    const prefix = `output/${projectId}/`;
+
+    try {
+        let continuationToken: string | undefined = undefined;
+
+        do {
+            // List all objects in the specified prefix (folder)
+            const listParams = {
+                Bucket: "builds",
+                Prefix: prefix,
+                ContinuationToken: continuationToken, // For handling pagination
+            };
+
+            const listObjectsResponse = await s3.listObjectsV2(listParams).promise();
+            const filesToDelete = listObjectsResponse.Contents?.map((file) => ({
+                Key: file.Key,
+            })) || [];
+
+            if (filesToDelete.length > 0) {
+                // Delete the files from S3
+                const deleteParams = {
+                    Bucket: "builds",
+                    Delete: {
+                        Objects: filesToDelete,
+                    },
+                };
+
+                const deleteResponse = await s3.deleteObjects(deleteParams).promise();
+                console.log("Deleted files from S3:", deleteResponse.Deleted);
+            } else {
+                console.log("No files to delete from S3 for the specified folder.");
+            }
+
+            continuationToken = listObjectsResponse.NextContinuationToken; // Update the token for the next iteration
+        } while (continuationToken);
+
+        console.log(`Successfully removed all files under folder: ${prefix}`);
+    } catch (error) {
+        console.error("Error removing source code from S3:", error);
+    }
+}
