@@ -4,7 +4,6 @@ import fs from "fs";
 const s3 = new S3({
     accessKeyId : process.env.ACCESS_KEY_ID,
     secretAccessKey : process.env.SECRET_ACCESS_KEY,
-    endpoint: process.env.ENDPOINT
 })
 
 
