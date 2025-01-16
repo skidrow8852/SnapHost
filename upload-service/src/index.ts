@@ -3,6 +3,7 @@ import { generate } from "./utils/utils";
 import { revokeToken, verifyUserAccessToken } from "./utils/verifyToken";
 import { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue} from "./utils/queue";
 import { prisma } from "./database/db";
+import { getUserProjects } from "./client/client";
 const { listener } = require("./database/redis");
 const express = require("express");
 
@@ -31,14 +32,20 @@ app.post("/deploy", verifyUserAccessToken, async (req, res) => {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        // Generate a unique project ID
-        const id = generate();
+        const project = await prisma.project.findUnique({
+            where: { userId: userId , repoUrl : repoUrl},
+        });
+
+        if (project) {
+            return res.status(200).json({ error: "Project already exists" });
+        }
+        const projectId = generate();
 
         // Add deployment job to Bull queue
-        await buildQueue.add({ id, repoUrl, userId });
+        await buildQueue.add({ id : projectId, repoUrl, userId });
 
-        console.log(`Project ${id} added to the build queue for user ${userId}`);
-        res.json({ id });
+        console.log(`Project ${projectId} added to the build queue for user ${userId}`);
+        res.json({ id : projectId });
     } catch (error) {
         console.error("Error deploying project:", error);
         res.status(500).json({ error: "Failed to deploy project" });
@@ -64,7 +71,7 @@ app.post("/redeploy", verifyUserAccessToken, async (req, res) => {
 
 
         // Add redeployment job to Bull queue
-        await redeployQueue.add({ id, repoUrl : project.repoUrl, userId, type : project.type });
+        await redeployQueue.add({ id : project.projectId, repoUrl : project.repoUrl, userId, type : project.type });
         res.json({ id, status: "redeploying" });
     } catch (error) {
         console.error("Error redeploying project:", error);
@@ -79,9 +86,7 @@ app.get("/projects/:userId", verifyUserAccessToken, async (req, res) => {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const projects = await prisma.project.findMany({
-            where: { userId: req.params?.userId },
-        });
+        const projects = await getUserProjects(req.params?.userId)
 
         const projectsWithViewCount = await Promise.all(
             projects?.map(async (project) => {

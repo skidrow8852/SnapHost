@@ -2,8 +2,8 @@ import path from "path";
 import simpleGit from "simple-git";
 import { getAllFiles } from "./file";
 import { uploadFile } from "./aws";
-import { prisma } from "../database/db";
-import { deleteFolderRecursive, getProjectType } from "./utils";
+import { deleteFolder, getProjectType } from "./utils";
+import {createProject, updateProject} from "../client/client"
 import fs from "fs";
 
 // Initialize Bull Queues
@@ -67,18 +67,16 @@ buildQueue.process(async (job) => {
         console.log(`Processing deployment for project: ${id}`);
         const result = await deployProject(id, repoUrl);
         const type = result?.type || "unknown"
-        await prisma.project.create({
-            data: {
+        await createProject({
                 userId : userId,
-                id : id,
+                projectId : id,
                 repoUrl : repoUrl,
                 status: result.status,
                 type
-            },
-        });
+            })
 
         await processDeployQueue.add({ id, repoUrl, userId , type})
-        deleteFolderRecursive(folderToDeploy);
+        deleteFolder(folderToDeploy);
     }
     
     catch(error){
@@ -93,16 +91,13 @@ redeployQueue.process(async (job) => {
         console.log(`Processing redeployment for project: ${id}`);
         const result = await deployProject(id, repoUrl, true);
         const type = result?.type || "unknown"
-        await prisma.project.update({
-            where: { userId , id },
-            data: {
+        await updateProject(userId,id,{
                 status: result?.status,
                 type
-            },
-        });
+            })
     
         await processReDeployQueue.add({ id, repoUrl, userId , type})
-        deleteFolderRecursive(folderToDeploy);
+        deleteFolder(folderToDeploy);
         
     }catch(error){
         console.error(`Error during task processing for project: ${id}`, error);
@@ -122,13 +117,10 @@ resultQueue.process(async (job) => {
 
     let userIds = io.getConnectedSocketIds();
     try {
-        await prisma.project.update({
-            where: { userId, id },
-            data: {
+        await updateProject(userId,id,{
                 status: 'deployed',
                 screenshot: screenshot,
-            },
-        });
+            })
 
         // Emit success message to connected clients
         if (userIds[userId?.toLowerCase()]) {
@@ -136,7 +128,7 @@ resultQueue.process(async (job) => {
               (element: string) => {
                 io.getIO()
                   .to(element)
-                  .emit("deploy-success", { id, status, screenshot });
+                  .emit("deploy-success", { id, screenshot });
               },
             );
         }
