@@ -4,6 +4,7 @@ node_modules
 upload-service/node_modules
 upload-service/.env
 upload-service/dist
+
 deploy-service/node_modules
 deploy-service/.env
 deploy-service/dist
