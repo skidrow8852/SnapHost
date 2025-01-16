@@ -2,7 +2,7 @@ import cors from "cors";
 import { generate } from "./utils/utils";
 import { revokeToken, verifyUserAccessToken } from "./utils/verifyToken";
 import { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue, processRemoveProject} from "./utils/queue";
-import { prisma } from "./database/db";
+import { prisma } from "./client/client"; 
 import { getUserProjects } from "./client/client";
 const { listener } = require("./database/redis");
 const express = require("express");
