@@ -1,6 +1,7 @@
 
 import express from "express"
 import { S3 } from "aws-sdk";
+import {listener} from "./redis"
 const s3 = new S3({
     accessKeyId: process.env.ACCESS_KEY_ID,
     secretAccessKey: process.env.SECRET_ACCESS_KEY,
@@ -8,6 +9,15 @@ const s3 = new S3({
 });
 
 const app = express() as any;
+
+(async () => {
+    try {
+        await listener.connect();
+        console.log("Connected to Redis");
+    } catch (connectionError) {
+        console.error("Error connecting to Redis:", connectionError);
+    }
+})();
 
 app.get("/*", async (req, res) => {
     try {
@@ -61,6 +71,8 @@ app.get("/*", async (req, res) => {
 
         res.set("Content-Type", contentType);
         res.send(contents.Body);
+        const redisKey = `pageViews:${id}`;
+        await listener.incr(redisKey);
 
     } catch (error) {
         console.error("Error fetching file from S3:", error);
@@ -91,6 +103,12 @@ async function getS3Object(id : string, filePath : string, folder : string) {
         throw error; 
     }
 }
+
+process.on("SIGINT", async () => {
+    console.log("Shutting down...");
+    await listener.disconnect();
+    process.exit(0);
+});
 
 app.listen(5001, () => {
     console.log("Server is running on port 5001");

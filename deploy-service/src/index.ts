@@ -1,12 +1,9 @@
-import { createClient, commandOptions } from "redis";
 import { downloadS3Folder, removeSourceCodeFromS3 } from "./aws";
 import { buildProject, copyFinalDist, removeSourceCode } from "./utils";
 import { screenshotPage } from "./metrics";
+import { resultQueue,processDeployQueue, processReDeployQueue} from "./queue"
 
-const subscriber = createClient();
-const publisher = createClient();
-
-async function processTask(queueName: string, id: string) {
+async function processTask(queueName: string, id: string, userId: string) {
     try {
         console.log(`[${queueName}] Processing ID: ${id}`);
         
@@ -24,68 +21,49 @@ async function processTask(queueName: string, id: string) {
         await removeSourceCodeFromS3(id);
         
         console.log(`[${queueName}] Processing complete for ID: ${id}`);
-        await publisher.hSet("status", id, "deployed");
 
         // take a screenshot of the HomePage of the deployed project
         const values = await screenshotPage(`https://${id}/${process.env.HOSTNAME}/`, id )
         if(!values.error){
-            // TODO -- save screenshot and update status to DB
+            const result = {
+                status : values.status,
+                screenshot : values.screenshot
+            }
+            await resultQueue.add({ id, userId , screenshot : result.screenshot, status : result.status})
         }
     } catch (error) {
         console.error(`[${queueName}] Error processing ID: ${id}`, error);
-        await publisher.hSet("status", id, "failed");
     }
 }
 
-(async () => {
-    try {
-        // Connect to Redis
-        await subscriber.connect();
-        await publisher.connect();
-        console.log("Connected to Redis");
 
-        const queues = ["build-queue", "redeploy-queue"];
+processDeployQueue.process(async (job) => {
+    const { id, userId } = job.data;
+    console.log(`Processing deployment for project: ${id}`);
+    await processTask("deploy", id,userId);
+});
 
-        while (true) {
-            for (const queue of queues) {
-                try {
-                    // Wait for the next item in the queue
-                    const response = await subscriber.brPop(
-                        commandOptions({ isolated: true }),
-                        queue,
-                        0 // Block indefinitely
-                    );
+processReDeployQueue.process(async (job) => {
+    const { id, userId } = job.data;
+    console.log(`Processing redeployment for project: ${id}`);
+    await processTask("redeploy", id,userId);
+    
+});
 
-                    if (response && response.element) {
-                        const id = response.element;
-                        await processTask(queue, id);
-                    }
-                } catch (taskError) {
-                    console.error(`[${queue}] Error fetching task:`, taskError);
-                }
-            }
-        }
-    } catch (connectionError) {
-        console.error("Error connecting to Redis:", connectionError);
-    } finally {
-        console.log("Shutting down...");
-        await subscriber.disconnect();
-        await publisher.disconnect();
-        console.log("Disconnected from Redis");
-    }
-})();
 
 // Handle process termination signals
 process.on("SIGINT", async () => {
     console.log("Received SIGINT. Exiting...");
-    await subscriber.disconnect();
-    await publisher.disconnect();
+    await resultQueue.close();
+    await processDeployQueue.close();
+    await processReDeployQueue.close();
     process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
     console.log("Received SIGTERM. Exiting...");
-    await subscriber.disconnect();
-    await publisher.disconnect();
+     await resultQueue.close();
+    await processDeployQueue.close();
+    await processReDeployQueue.close();
     process.exit(0);
 });
