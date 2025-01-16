@@ -3,7 +3,7 @@ import { buildProject, copyFinalDist, removeSourceCode } from "./utils";
 import { screenshotPage } from "./metrics";
 import { resultQueue,processDeployQueue, processReDeployQueue} from "./queue"
 
-async function processTask(queueName: string, id: string, userId: string) {
+async function processTask(queueName: string, id: string, userId: string, type : string) {
     try {
         console.log(`[${queueName}] Processing ID: ${id}`);
         
@@ -11,7 +11,9 @@ async function processTask(queueName: string, id: string, userId: string) {
         await downloadS3Folder(`output/${id}`);
         
         // Build and copy final distribution
-        await buildProject(id);
+        if(type == 'react'){
+            await buildProject(id);
+        }
         await copyFinalDist(id);
 
          // Remove source code after build from machine
@@ -37,15 +39,15 @@ async function processTask(queueName: string, id: string, userId: string) {
 }
 
 processDeployQueue.process(async (job) => {
-    const { id, userId } = job.data;
+    const { id, userId , type} = job.data;
     console.log(`Processing deployment for project: ${id}`);
-    await processTask("deploy", id,userId);
+    await processTask("deploy", id,userId,type);
 });
 
 processReDeployQueue.process(async (job) => {
-    const { id, userId } = job.data;
+    const { id, userId , type} = job.data;
     console.log(`Processing redeployment for project: ${id}`);
-    await processTask("redeploy", id,userId);
+    await processTask("redeploy", id,userId,type);
     
 });
 

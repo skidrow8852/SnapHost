@@ -1,5 +1,9 @@
+import path from "path";
+import fs from "fs"
+
 const MAX_LEN = 10;
 
+// Generate random string
 export function generate(){
     let ans = ""
     const subset = "1234567890qwertyuiopasdfghjklzxcvbnm";
@@ -8,3 +12,31 @@ export function generate(){
     }
     return ans;
 }
+
+// identify a React project versus a static project 
+export const getProjectType = async (repoPath : string) => {
+    const packageJsonPath = path.join(repoPath, "package.json");
+    const indexPath = path.join(repoPath, "index.html");
+
+    try {
+        // Check for the presence of package.json to determine if it's a Node.js project
+        if (fs.existsSync(packageJsonPath)) {
+            const packageJson = require(packageJsonPath);
+
+            // Check if it's a React project
+            if (packageJson.dependencies && packageJson.dependencies["react"]) {
+                return "react";
+            }
+        }
+
+        if (fs.existsSync(indexPath)) {
+            return "static";  
+        }
+
+
+        return "unknown"; 
+    } catch (error) {
+        console.error("Error identifying project type:", error);
+        return "Unknown";  // Default case if an error occurs
+    }
+};

@@ -50,21 +50,23 @@ app.post("/deploy", verifyUserAccessToken, async (req, res) => {
 // Redeploy a project
 app.post("/redeploy", verifyUserAccessToken, async (req, res) => {
     try {
-        const { userId, id, repoUrl } = req.body;
+        const { userId, id } = req.body;
 
         if (userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        // Check if the project exists locally
-        const outputPath = path.join(__dirname, `output/${id}`);
-        const files = getAllFiles(outputPath);
-        if (!files || files.length === 0) {
+        // Check if the project exists
+        const project = await prisma.project.findUnique({
+            where: { userId: userId , id : id},
+        });
+        if (!project) {
             return res.status(400).json({ error: "Project does not exist. Use /deploy instead." });
         }
 
+
         // Add redeployment job to Bull queue
-        await redeployQueue.add({ id, repoUrl, userId });
+        await redeployQueue.add({ id, repoUrl : project.repoUrl, userId, type : project.type });
         res.json({ id, status: "redeploying" });
     } catch (error) {
         console.error("Error redeploying project:", error);

@@ -3,6 +3,8 @@ import simpleGit from "simple-git";
 import { getAllFiles } from "./file";
 import { uploadFile } from "./aws";
 import { prisma } from "../database/db";
+import { getProjectType } from "./utils";
+import fs from "fs";
 
 // Initialize Bull Queues
 const Queue = require ("bull");
@@ -21,50 +23,76 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
         console.log(`${isRedeploy ? "Redeploying" : "Deploying"} project: ${id}`);
         await simpleGit().clone(repoUrl, outputPath, { '--force': isRedeploy ? 'true' : 'false' });
 
-        // Upload files to S3
-        const files = getAllFiles(outputPath);
-        for (const file of files) {
+        // Identify the project type
+        const projectType = await getProjectType(outputPath);
+        console.log(`Project type identified as: ${projectType}`);
+
+        let folderToDeploy = outputPath;
+
+        // If it's a static project, move files into the dist folder
+        if (projectType == "static") {
+            const distPath = path.join(outputPath, "dist");
+
+            // Create dist folder if it doesn't exist
+            if (!fs.existsSync(distPath)) {
+                fs.mkdirSync(distPath);
+            }
+
+            const files = getAllFiles(outputPath);
+            files.forEach((file) => {
+                const fileName = path.basename(file);
+                const destPath = path.join(distPath, fileName);
+                fs.renameSync(file, destPath); 
+            });
+
+            folderToDeploy = distPath; 
+        }
+        const filesToUpload = getAllFiles(folderToDeploy);
+        for (const file of filesToUpload) {
             const relativePath = file.slice(__dirname.length + 1);
             await uploadFile(relativePath, file);
         }
 
         console.log(`${isRedeploy ? "Redeployment" : "Deployment"} complete for project: ${id}`);
-        return { status: isRedeploy ? "redeploying" : "deploying" };
+        return { status: isRedeploy ? "redeploying" : "deploying", type: projectType };
     } catch (error) {
         console.error(`Error during ${isRedeploy ? "redeployment" : "deployment"} for project: ${id}`, error);
         throw error;
     }
 };
-
 // Add job processors
 buildQueue.process(async (job) => {
     const { id, repoUrl, userId } = job.data;
     console.log(`Processing deployment for project: ${id}`);
     const result = await deployProject(id, repoUrl);
+    const type = result?.type || "unknown"
     await prisma.project.create({
         data: {
             userId : userId,
             id : id,
             repoUrl : repoUrl,
             status: result.status,
+            type
         },
     });
 
-    await processDeployQueue.add({ id, repoUrl, userId })
+    await processDeployQueue.add({ id, repoUrl, userId , type})
 });
 
 redeployQueue.process(async (job) => {
     const { id, repoUrl, userId } = job.data;
     console.log(`Processing redeployment for project: ${id}`);
     const result = await deployProject(id, repoUrl, true);
+    const type = result?.type || "unknown"
     await prisma.project.update({
         where: { userId , id },
         data: {
             status: result?.status,
+            type
         },
     });
 
-    await processReDeployQueue.add({ id, repoUrl, userId })
+    await processReDeployQueue.add({ id, repoUrl, userId , type})
 });
 
 
