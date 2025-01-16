@@ -3,7 +3,7 @@ import simpleGit from "simple-git";
 import { getAllFiles } from "./file";
 import { uploadFile } from "./aws";
 import { prisma } from "../database/db";
-import { getProjectType } from "./utils";
+import { deleteFolderRecursive, getProjectType } from "./utils";
 import fs from "fs";
 
 // Initialize Bull Queues
@@ -54,7 +54,7 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
         }
 
         console.log(`${isRedeploy ? "Redeployment" : "Deployment"} complete for project: ${id}`);
-        return { status: isRedeploy ? "redeploying" : "deploying", type: projectType };
+        return { status: isRedeploy ? "redeploying" : "deploying", type: projectType , folderToDeploy};
     } catch (error) {
         console.error(`Error during ${isRedeploy ? "redeployment" : "deployment"} for project: ${id}`, error);
         throw error;
@@ -62,37 +62,51 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
 };
 // Add job processors
 buildQueue.process(async (job) => {
-    const { id, repoUrl, userId } = job.data;
-    console.log(`Processing deployment for project: ${id}`);
-    const result = await deployProject(id, repoUrl);
-    const type = result?.type || "unknown"
-    await prisma.project.create({
-        data: {
-            userId : userId,
-            id : id,
-            repoUrl : repoUrl,
-            status: result.status,
-            type
-        },
-    });
+    const { id, repoUrl, userId , folderToDeploy} = job.data;
+    try {
+        console.log(`Processing deployment for project: ${id}`);
+        const result = await deployProject(id, repoUrl);
+        const type = result?.type || "unknown"
+        await prisma.project.create({
+            data: {
+                userId : userId,
+                id : id,
+                repoUrl : repoUrl,
+                status: result.status,
+                type
+            },
+        });
 
-    await processDeployQueue.add({ id, repoUrl, userId , type})
+        await processDeployQueue.add({ id, repoUrl, userId , type})
+        deleteFolderRecursive(folderToDeploy);
+    }
+    
+    catch(error){
+        console.error(`Error during task processing for project: ${id}`, error);
+    }
 });
 
 redeployQueue.process(async (job) => {
-    const { id, repoUrl, userId } = job.data;
-    console.log(`Processing redeployment for project: ${id}`);
-    const result = await deployProject(id, repoUrl, true);
-    const type = result?.type || "unknown"
-    await prisma.project.update({
-        where: { userId , id },
-        data: {
-            status: result?.status,
-            type
-        },
-    });
-
-    await processReDeployQueue.add({ id, repoUrl, userId , type})
+    const { id, repoUrl, userId , folderToDeploy} = job.data;
+    try {
+        
+        console.log(`Processing redeployment for project: ${id}`);
+        const result = await deployProject(id, repoUrl, true);
+        const type = result?.type || "unknown"
+        await prisma.project.update({
+            where: { userId , id },
+            data: {
+                status: result?.status,
+                type
+            },
+        });
+    
+        await processReDeployQueue.add({ id, repoUrl, userId , type})
+        deleteFolderRecursive(folderToDeploy);
+        
+    }catch(error){
+        console.error(`Error during task processing for project: ${id}`, error);
+    }
 });
 
 

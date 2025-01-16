@@ -40,3 +40,18 @@ export const getProjectType = async (repoPath : string) => {
         return "Unknown";  // Default case if an error occurs
     }
 };
+
+
+// Clean up: Delete the local folder after upload
+export const deleteFolderRecursive = (folderPath : string) => {
+            const files = fs.readdirSync(folderPath);
+            files.forEach((file) => {
+                const currentPath = path.join(folderPath, file);
+                if (fs.lstatSync(currentPath).isDirectory()) {
+                    deleteFolderRecursive(currentPath);  // Recursively delete subfolders
+                } else {
+                    fs.unlinkSync(currentPath);  // Delete the file
+                }
+            });
+            fs.rmdirSync(folderPath);  // Remove the now-empty folder
+        };
