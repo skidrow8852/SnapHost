@@ -5,14 +5,13 @@ import path from "path"
 
 const s3 = new S3({
     accessKeyId : process.env.ACCESS_KEY_ID,
-    secretAccessKey : process.env.SECRET_ACCESS_KEY,
-    endpoint: process.env.ENDPOINT
+    secretAccessKey : process.env.SECRET_ACCESS_KEY
 })
 
 // download files from S3 folder
 export async function downloadS3Folder(pathId : string) {
     const allFiles = await s3.listObjectsV2({
-        Bucket : "builds",
+        Bucket : "snaphost",
         Prefix : pathId
     }).promise();
 
@@ -29,7 +28,7 @@ export async function downloadS3Folder(pathId : string) {
                 fs.mkdirSync(dirName, {recursive : true})
             }
             s3.getObject({
-                Bucket : "builds",
+                Bucket : "snaphost",
                 Key
             }).createReadStream().pipe(outputFile)
             .on("finish", () => {
@@ -47,7 +46,7 @@ export const uploadFile = async (fileName: string, localFilePath: string) => {
     const fileContent = fs.readFileSync(localFilePath);
     const response = await s3.upload({
         Body: fileContent,
-        Bucket: "builds",
+        Bucket: "snaphost",
         Key: fileName,
     }).promise();
     console.log(response);
@@ -60,7 +59,7 @@ export async function removeSourceCodeFromS3(id : string) {
     try {
         // List all objects in the specified prefix (folder)
         const listParams = {
-            Bucket: "builds", 
+            Bucket: "snaphost", 
             Prefix: prefix, 
         };
         
@@ -78,7 +77,7 @@ export async function removeSourceCodeFromS3(id : string) {
         if (filesToDelete.length > 0) {
             // Delete the unwanted files from S3
             const deleteParams = {
-                Bucket: "builds",
+                Bucket: "snaphost",
                 Delete: {
                     Objects: filesToDelete,
                 },
@@ -105,7 +104,7 @@ export async function removeProjectFolderFromS3(projectId: string) {
         do {
             // List all objects in the specified prefix (folder)
             const listParams = {
-                Bucket: "builds",
+                Bucket: "snaphost",
                 Prefix: prefix,
                 ContinuationToken: continuationToken, // For handling pagination
             };
@@ -118,7 +117,7 @@ export async function removeProjectFolderFromS3(projectId: string) {
             if (filesToDelete.length > 0) {
                 // Delete the files from S3
                 const deleteParams = {
-                    Bucket: "builds",
+                    Bucket: "snaphost",
                     Delete: {
                         Objects: filesToDelete,
                     },

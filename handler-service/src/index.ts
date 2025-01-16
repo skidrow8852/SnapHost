@@ -90,7 +90,7 @@ async function getS3Object(id : string, filePath : string, folder : string) {
     try {
         const response = await s3
             .getObject({
-                Bucket: "builds",
+                Bucket: "snaphost",
                 Key: `${id}/${folder}${filePath}`,
             })
             .promise();
