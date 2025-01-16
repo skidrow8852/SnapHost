@@ -133,7 +133,6 @@ app.delete("/remove/user/:userId/project/:id", verifyUserAccessToken, async (req
     }
 });
 
-
 // Revoke token
 app.post("/revoke", verifyUserAccessToken, async (req, res) => {
     try {

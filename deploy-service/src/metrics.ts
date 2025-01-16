@@ -1,3 +1,5 @@
+import { uploadFile } from "./aws";
+
 const puppeteer = require("puppeteer");
 const path = require("path");
 const fs = require("fs");
@@ -31,16 +33,19 @@ export async function screenshotPage(url: string, id: string) {
         await page.goto(url, { waitUntil: "networkidle2" });
 
         // Take a screenshot
-        const screenshotPath = path.join(screenshotsDir, `${id}_${Date.now()}.png`);
+        const s3FileName = `${id}_${Date.now()}.png`;
+        const screenshotPath = path.join(screenshotsDir, s3FileName);
         await page.screenshot({ path: screenshotPath });
-
         // Close the browser
         await browser.close();
+
+        // Upload the screenshot to the S3 bucket
+        await uploadFile(s3FileName, screenshotPath);
 
         // Send response
         return {
             status,
-            screenshot: screenshotPath,
+            screenshot: s3FileName,
         };
     } catch (error) {
         console.error("Error:", error);
