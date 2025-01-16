@@ -6,6 +6,7 @@ import path from "path";
 import { generate } from "./utils/utils";
 import { getAllFiles } from "./utils/file";
 import { uploadFile } from "./utils/aws";
+import { revokeToken, verifyUserAccessToken } from "./utils/verifyToken";
 const {publisher, subscriber, listener} = require("./database/redis")
 
 (async () => {
@@ -45,12 +46,14 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
 
 
 // Deploy a project
-app.post("/deploy", async (req, res) => {
+app.post("/deploy", verifyUserAccessToken , async (req, res) => {
     try {
         const { repoUrl, userId } = req.body;
-
         if (!repoUrl || !userId) {
             return res.status(400).json({ error: "repoUrl and userId are required" });
+        }
+        if(userId?.toLowerCase() !== req.payload?.id?.toLowerCase()){
+            return res.status(401).json({ error: "Unauthorized" });
         }
         // Generate a unique project ID
         const id = generate();
@@ -81,8 +84,12 @@ app.post("/deploy", async (req, res) => {
 
 
 // Get the status of a project deployment
-app.get("/status/:id", async (req , res) => {
+app.get("/status/:id/user/:userId", verifyUserAccessToken,  async (req , res) => {
     try {
+
+        if(req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()){
+            return res.status(401).json({ error: "Unauthorized" });
+        }
         const id = req.params.id as string;
         const status = await subscriber.hGet("status", id) || await subscriber.hGet("redeploy-status", id);
         res.json({ id, status });
@@ -93,10 +100,12 @@ app.get("/status/:id", async (req , res) => {
 });
 
 // Redeploy an existing project
-app.post("/redeploy", async (req, res ) => {
+app.post("/redeploy", verifyUserAccessToken,  async (req, res ) => {
     try {
-        const id = req.body.id;
-        const repoUrl = req.body.repoUrl;
+        const {userId, id, repoUrl} = req.body
+        if(userId?.toLowerCase() !== req.payload?.id?.toLowerCase()){
+            return res.status(401).json({ error: "Unauthorized" });
+        }
         const outputPath = path.join(__dirname, `output/${id}`);
 
         // Check if the project exists before redeploying
@@ -114,10 +123,13 @@ app.post("/redeploy", async (req, res ) => {
 });
 
 // Get all deployed projects for a user (TODO: Add user identification logic)
-app.get("/projects/:userId", async (req, res) => {
+app.get("/projects/:userId", verifyUserAccessToken, async (req, res) => {
     try {
         const userId = req.params.userId;
 
+         if(userId?.toLowerCase() !== req.payload?.id?.toLowerCase()){
+            return res.status(401).json({ error: "Unauthorized" });
+        }
         // Get all project IDs for the user
         const projectIds = await subscriber.hGet("user-projects", userId);
 
@@ -140,6 +152,25 @@ app.get("/projects/:userId", async (req, res) => {
         );
 
         res.json({ projects });
+    } catch (error) {
+        console.error("Error fetching user projects:", error);
+        res.status(500).json({ error: "Failed to fetch user projects" });
+    }
+});
+
+
+// revoke token
+app.get("/revoke", verifyUserAccessToken, async (req, res) => {
+    try {
+        const userId = req.params.userId;
+
+         if(userId?.toLowerCase() !== req.payload?.id?.toLowerCase() || !req.payload?.jti){
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+       
+        await revokeToken(req.payload?.jti)
+
+        res.status(200).json({ status : "success" });
     } catch (error) {
         console.error("Error fetching user projects:", error);
         res.status(500).json({ error: "Failed to fetch user projects" });
