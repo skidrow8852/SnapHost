@@ -36,11 +36,10 @@ export async function downloadS3Folder(pathId : string) {
                 resolve("")
             }) || []
 
-            await Promise.all(allPromises?.filter(x => x !== undefined))
-
         })
     })
-    
+
+    await Promise.all(allPromises?.filter(x => x !== undefined))
 }
 
 // Upload file to S3 bucket
