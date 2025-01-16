@@ -41,7 +41,7 @@ buildQueue.process(async (job) => {
     const { id, repoUrl, userId } = job.data;
     console.log(`Processing deployment for project: ${id}`);
     const result = await deployProject(id, repoUrl);
-    await prisma.projects.create({
+    await prisma.project.create({
         data: {
             userId : userId,
             id : id,
@@ -57,7 +57,7 @@ redeployQueue.process(async (job) => {
     const { id, repoUrl, userId } = job.data;
     console.log(`Processing redeployment for project: ${id}`);
     const result = await deployProject(id, repoUrl, true);
-    await prisma.projects.update({
+    await prisma.project.update({
         where: { userId , id },
         data: {
             status: result?.status,
@@ -71,7 +71,7 @@ redeployQueue.process(async (job) => {
 resultQueue.process(async (job) => {
     const { id, userId , status, screenshot} = job.data;
     console.log(`Processing redeployment for project: ${id}`);
-    await prisma.projects.update({
+    await prisma.project.update({
         where: { userId , id },
         data: {
             status: status,

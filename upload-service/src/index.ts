@@ -73,25 +73,66 @@ app.post("/redeploy", verifyUserAccessToken, async (req, res) => {
 });
 
 // Get all user projects
-app.get("/status/:userId", verifyUserAccessToken, async (req, res) => {
+app.get("/projects/:userId", verifyUserAccessToken, async (req, res) => {
     try {
         if (req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const status = await prisma.users.findUnique({
+        const projects = await prisma.project.findMany({
             where: { userId: req.params?.userId },
-            include: {
-                projects: true,
-            },
         });
 
-        res.send({ result: status?.projects });
+        const projectsWithViewCount = await Promise.all(
+            projects?.map(async (project) => {
+                const redisKey = `pageViews:${project.id}`;
+                const viewCount = await listener.get(redisKey); 
+
+                // Convert the view count to a number
+                const views = viewCount ? parseInt(viewCount, 10) : 0;
+
+                return { ...project, view: views };
+            }) || []
+        );
+
+        res.send({ result: projectsWithViewCount });
     } catch (error) {
         console.error("Error fetching project status:", error);
         res.status(500).json({ error: "Failed to fetch project status" });
     }
 });
+
+
+// delete a project
+app.delete("/remove/user/:userId/project/:id", verifyUserAccessToken, async (req, res) => {
+    try {
+        if (req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const project = await prisma.project.findUnique({
+            where: { userId: req.params?.userId , id : req.params?.id},
+        });
+
+        if (!project) {
+            return res.status(404).json({ error: "Project not found" });
+        }
+
+        await prisma.project.delete({
+            where: { id: req.params?.id },
+        });
+
+
+        const redisKey = `pageViews:${project.id}`;
+        res.status(200).json({ result: "Project deleted successfully" });
+        await listener.del(redisKey);
+
+    } catch (error) {
+        console.error("Error fetching project status:", error);
+        res.status(500).json({ error: "Failed to fetch project status" });
+    }
+});
+
 
 // Revoke token
 app.post("/revoke", verifyUserAccessToken, async (req, res) => {
