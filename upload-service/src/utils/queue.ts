@@ -20,6 +20,10 @@ const io = require("../socket/socket");
 const deployProject = async (id: string, repoUrl: string, isRedeploy = false) => {
     const outputPath = path.join(__dirname, `output/${id}`);
     try {
+        // Create output directory if it doesn't exist
+        if (!fs.existsSync(outputPath)) {
+            fs.mkdirSync(outputPath, { recursive: true });
+        }
         // Clone repository
         console.log(`${isRedeploy ? "Redeploying" : "Deploying"} project: ${id}`);
         await simpleGit().clone(repoUrl, outputPath, { '--force': isRedeploy ? 'true' : 'false' });
