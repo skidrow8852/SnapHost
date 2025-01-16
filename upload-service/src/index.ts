@@ -11,6 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
 (async () => {
     try {
         await listener.connect();
@@ -85,6 +86,12 @@ app.get("/projects/:userId", verifyUserAccessToken, async (req, res) => {
         if (req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
             return res.status(401).json({ error: "Unauthorized" });
         }
+        let key = `projects:${req.params?.userId?.toLowerCase()}`
+        const value = await listener.get(key);
+            if (value) {
+                const data = JSON.parse(value);
+                return res.send({result : data});
+            }
 
         const projects = await getUserProjects(req.params?.userId)
 
@@ -99,7 +106,8 @@ app.get("/projects/:userId", verifyUserAccessToken, async (req, res) => {
                 return { ...project, view: views };
             }) || []
         );
-
+        
+        await listener.set(key, JSON.stringify(projectsWithViewCount))
         res.send({ result: projectsWithViewCount });
     } catch (error) {
         console.error("Error fetching project status:", error);

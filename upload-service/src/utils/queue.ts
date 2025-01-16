@@ -5,6 +5,7 @@ import { uploadFile } from "./aws";
 import { deleteFolder, getProjectType } from "./utils";
 import {createProject, updateProject} from "../client/client"
 import fs from "fs";
+import { listener } from "../database/redis";
 
 // Initialize Bull Queues
 const Queue = require ("bull");
@@ -67,13 +68,16 @@ buildQueue.process(async (job) => {
         console.log(`Processing deployment for project: ${id}`);
         const result = await deployProject(id, repoUrl);
         const type = result?.type || "unknown"
-        await createProject({
+        const project = await createProject({
                 userId : userId,
                 projectId : id,
                 repoUrl : repoUrl,
                 status: result.status,
                 type
             })
+            if(project){
+                await listener.del(`projects:${userId.toLowerCase()}`)
+            }
 
         await processDeployQueue.add({ id, repoUrl, userId , type})
         deleteFolder(folderToDeploy);
@@ -91,10 +95,14 @@ redeployQueue.process(async (job) => {
         console.log(`Processing redeployment for project: ${id}`);
         const result = await deployProject(id, repoUrl, true);
         const type = result?.type || "unknown"
-        await updateProject(userId,id,{
+        const project = await updateProject(userId,id,{
                 status: result?.status,
                 type
             })
+
+            if(project){
+                await listener.del(`projects:${userId.toLowerCase()}`)
+            }
     
         await processReDeployQueue.add({ id, repoUrl, userId , type})
         deleteFolder(folderToDeploy);
@@ -117,10 +125,14 @@ resultQueue.process(async (job) => {
 
     let userIds = io.getConnectedSocketIds();
     try {
-        await updateProject(userId,id,{
+        const project = await updateProject(userId,id,{
                 status: 'deployed',
                 screenshot: screenshot,
             })
+
+        if(project){
+                await listener.del(`projects:${userId.toLowerCase()}`)
+            }
 
         // Emit success message to connected clients
         if (userIds[userId?.toLowerCase()]) {
