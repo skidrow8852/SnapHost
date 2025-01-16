@@ -9,11 +9,11 @@ import { listener } from "../database/redis";
 
 // Initialize Bull Queues
 const Queue = require ("bull");
-const buildQueue = new Queue("build-queue", { redis: { host: "127.0.0.1", port: 6379 } });
-const redeployQueue = new Queue("redeploy-queue", { redis: { host: "127.0.0.1", port: 6379 } });
-const resultQueue = new Queue("result-queue", { redis: { host: "127.0.0.1", port: 6379 } });
-const processDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: "127.0.0.1", port: 6379 } });
-const processReDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: "127.0.0.1", port: 6379 } });
+const buildQueue = new Queue("build-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
+const redeployQueue = new Queue("redeploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
+const resultQueue = new Queue("result-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
+const processDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
+const processReDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
 const io = require("../socket/socket");
 
 // Function to deploy or redeploy a project
