@@ -51,20 +51,15 @@ processReDeployQueue.process(async (job) => {
     
 });
 
-
-// Handle process termination signals
-process.on("SIGINT", async () => {
-    console.log("Received SIGINT. Exiting...");
+const shutdown = async () => {
+    console.log("Received shutdown. Exiting...");
     await resultQueue.close();
     await processDeployQueue.close();
     await processReDeployQueue.close();
     process.exit(0);
-});
+}
 
-process.on("SIGTERM", async () => {
-    console.log("Received SIGTERM. Exiting...");
-     await resultQueue.close();
-    await processDeployQueue.close();
-    await processReDeployQueue.close();
-    process.exit(0);
-});
+// Handle process termination signals
+process.on("SIGINT", shutdown);
+
+process.on("SIGTERM", shutdown);

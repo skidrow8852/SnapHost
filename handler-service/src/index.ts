@@ -104,17 +104,14 @@ async function getS3Object(id : string, filePath : string, folder : string) {
     }
 }
 
-process.on("SIGINT", async () => {
+const shutdown = async() => {
     console.log("Shutting down...");
     await listener.disconnect();
     process.exit(0);
-});
+}
+process.on("SIGINT", shutdown);
 
-process.on("SIGTERM", async () => {
-    console.log("Received SIGTERM. Exiting...");
-    await listener.disconnect();
-    process.exit(0);
-});
+process.on("SIGTERM", shutdown);
 
 app.listen(5001, () => {
     console.log("Server is running on port 5001");

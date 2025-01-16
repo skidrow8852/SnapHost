@@ -1,14 +1,19 @@
 const puppeteer = require("puppeteer");
 const path = require("path");
- 
- 
- export async function screenshotPage(url : string, id : string) {
+const fs = require("fs");
 
+export async function screenshotPage(url: string, id: string) {
     if (!url) {
-        return { msg: "URL is required in the request body." , error : true}
+        return { msg: "URL is required in the request body.", error: true };
     }
 
     try {
+        // Ensure the screenshots directory exists
+        const screenshotsDir = path.join(__dirname, "screenshots");
+        if (!fs.existsSync(screenshotsDir)) {
+            fs.mkdirSync(screenshotsDir, { recursive: true }); // Create the directory if it doesn't exist
+        }
+
         // Launch Puppeteer browser
         const browser = await puppeteer.launch();
         const page = await browser.newPage();
@@ -26,7 +31,7 @@ const path = require("path");
         await page.goto(url, { waitUntil: "networkidle2" });
 
         // Take a screenshot
-        const screenshotPath = path.join(__dirname, "screenshots", `${id}_${Date.now()}.png`);
+        const screenshotPath = path.join(screenshotsDir, `${id}_${Date.now()}.png`);
         await page.screenshot({ path: screenshotPath });
 
         // Close the browser
@@ -39,8 +44,6 @@ const path = require("path");
         };
     } catch (error) {
         console.error("Error:", error);
-        return { msg: "An error occurred while processing the request." , error : true}
+        return { msg: "An error occurred while processing the request.", error: true };
     }
- }
- 
- 
+}

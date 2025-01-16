@@ -153,7 +153,7 @@ app.post("/revoke", verifyUserAccessToken, async (req, res) => {
     }
 });
 
-process.on("SIGINT", async () => {
+const shutdown = async () => {
     console.log("Shutting down...");
     await listener.disconnect();
     await buildQueue.close();
@@ -162,20 +162,20 @@ process.on("SIGINT", async () => {
     await processDeployQueue.close();
     await processReDeployQueue.close();
     process.exit(0);
-});
 
-process.on("SIGTERM", async () => {
-    console.log("Received SIGTERM. Exiting...");
-    await listener.disconnect();
-    await buildQueue.close();
-    await redeployQueue.close();
-    await resultQueue.close();
-    await processDeployQueue.close();
-    await processReDeployQueue.close();
-    process.exit(0);
-});
+}
 
+const server = require("http").createServer(app);
+
+// Initializing the Socket
+require("./socket/socket").init(server);
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
+
+
+const PORT = process.env.PORT || 5000;
 // Start the server
-app.listen(5000, () => {
-    console.log("Server is running on http://localhost:5000");
+server.listen(PORT, () => {
+  console.log("server is listening");
 });

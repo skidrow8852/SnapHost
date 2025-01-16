@@ -13,7 +13,7 @@ const redeployQueue = new Queue("redeploy-queue", { redis: { host: "127.0.0.1", 
 const resultQueue = new Queue("result-queue", { redis: { host: "127.0.0.1", port: 6379 } });
 const processDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: "127.0.0.1", port: 6379 } });
 const processReDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: "127.0.0.1", port: 6379 } });
-
+const io = require("../socket/socket");
 
 // Function to deploy or redeploy a project
 const deployProject = async (id: string, repoUrl: string, isRedeploy = false) => {
@@ -97,15 +97,51 @@ redeployQueue.process(async (job) => {
 
 
 resultQueue.process(async (job) => {
-    const { id, userId , status, screenshot} = job.data;
-    console.log(`Processing redeployment for project: ${id}`);
-    await prisma.project.update({
-        where: { userId , id },
-        data: {
-            status: status,
-            screenshot : screenshot
-        },
-    });
+    const { id, userId, screenshot } = job.data;
+    console.log(`Processing result of deployment for project: ${id}`);
+
+    if (!userId || !screenshot) {
+        const errorMessage = `Missing required data: ${!userId ? 'userId' : 'screenshot'}`;
+        console.error(errorMessage);
+        throw new Error(errorMessage);
+    }
+
+    let userIds = io.getConnectedSocketIds();
+    try {
+        await prisma.project.update({
+            where: { userId, id },
+            data: {
+                status: 'deployed',
+                screenshot: screenshot,
+            },
+        });
+
+        // Emit success message to connected clients
+        if (userIds[userId?.toLowerCase()]) {
+            userIds[userId?.toLowerCase()]?.forEach(
+              (element: string) => {
+                io.getIO()
+                  .to(element)
+                  .emit("deploy-success", { id, status, screenshot });
+              },
+            );
+        }
+
+        console.log(`Project ${id} successfully deployed`);
+    } catch (error) {
+        // Emit failure message to connected clients if error occurs
+        if (userIds[userId?.toLowerCase()]) {
+            userIds[userId?.toLowerCase()]?.forEach(
+              (element: string) => {
+                io.getIO()
+                  .to(element)
+                  .emit("deploy-failed", { error });
+              },
+            );
+        }
+        console.error(`Error during task processing for project: ${id}`, error);
+    }
 });
+
 
 export { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue};
