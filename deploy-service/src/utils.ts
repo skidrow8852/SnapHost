@@ -73,13 +73,13 @@ export async function copyFinalDist(id: string) {
 
 // Helper to remove source code after build
 export async function removeSourceCode(id: string) {
-    const sourcePath = path.join(__dirname, "output", id); 
+    const sourcePath = path.join(__dirname, "output", id);
 
     // Check if source code folder exists
     if (fs.existsSync(sourcePath)) {
         try {
             // Remove the source code directory (recursive deletion)
-            fs.rmdirSync(sourcePath, { recursive: true });
+            fs.rmSync(sourcePath, { recursive: true, force: true });
             console.log(`Source code for ${id} has been removed.`);
         } catch (error) {
             console.error(`Error removing source code for ${id}:`, error);
