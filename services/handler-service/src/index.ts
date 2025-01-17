@@ -2,6 +2,7 @@
 import express from "express"
 import { S3 } from "aws-sdk";
 import {listener} from "./redis"
+const mime = require("mime");
 import dotenv from "dotenv";
 dotenv.config();
 const s3 = new S3({
@@ -23,61 +24,56 @@ const app = express() as any;
 app.get("/*", async (req, res) => {
     try {
         const host = req.hostname;
-        const id = host.split(".")[0];
+        const id = host.split(".")[0]; // Extract subdomain
         let filePath = req.path;
 
-        // Default to index.html if the path is empty
-        if (filePath == "/" || !filePath.includes(".")) {
+        // Default to index.html if the path is empty or does not include a file extension
+        if (filePath === "/" || !filePath.includes(".")) {
             filePath = "/index.html";
         }
+        let folderName = 'dist'
 
-        // Try fetching from the dist folder first
-        let contents = await getS3Object(id, filePath, "dist");
+        // Fetch the file from the S3 'dist' folder first
+        let contents = await getS3Object(id, filePath, folderName);
 
-        // If the file was not found in the dist folder, try the build folder
+        // If the file was not found in the 'dist' folder, try the 'build' folder
         if (!contents) {
-            console.log(`File not found in dist. Trying build folder for ${filePath}`);
+            folderName = 'build'
             contents = await getS3Object(id, filePath, "build");
+            
         }
 
-        // If the file still wasn't found, return 404
+        // Handle missing files
         if (!contents) {
-            return res.status(404).send("File not found.");
+            // If the request is for a non-file route, return index.html
+            if (filePath !== "/index.html") {
+                filePath = "/index.html";
+                contents = await getS3Object(id, filePath, folderName);
+            }
+
+            if (!contents) {
+                return res.status(404).send("File not found.");
+            }
         }
 
-        // Set the appropriate content type based on file extension
-        const mimeTypes = {
-            ".html": "text/html",
-            ".css": "text/css",
-            ".js": "application/javascript",
-            ".json": "application/json",
-            ".png": "image/png",
-            ".jpg": "image/jpeg",
-            ".jpeg": "image/jpeg",
-            ".gif": "image/gif",
-            ".svg": "image/svg+xml",
-            ".ico": "image/x-icon",
-            ".mp4": "video/mp4",
-            ".webm": "video/webm",
-            ".ttf": "font/ttf",
-            ".woff": "font/woff",
-            ".woff2": "font/woff2",
-            ".otf": "font/otf",
-            ".eot": "application/vnd.ms-fontobject",
-            ".txt": "text/plain",
-        };
-
-        const fileExtension = filePath.slice(filePath.lastIndexOf("."));
-        const contentType = mimeTypes[fileExtension] || "application/octet-stream";
-
+        // Set the appropriate MIME type
+        const contentType = mime.getType(filePath) || "application/octet-stream";
         res.set("Content-Type", contentType);
+
+        // Add Cache-Control headers for static assets
+        if ([".js", ".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico"].includes(filePath.slice(filePath.lastIndexOf(".")))) {
+            res.set("Cache-Control", "public, max-age=2592000"); // Cache for 1 month
+        }
+
         res.send(contents.Body);
+
+        // Increment page view count in Redis
         const redisKey = `pageViews:${id}`;
         await listener.incr(redisKey);
 
-    } catch (error) {
-        console.error("Error fetching file from S3:", error);
 
+    } catch (error) {
+        console.error("Error handling request:", error);
         if (error.code === "NoSuchKey") {
             return res.status(404).send("File not found.");
         }
