@@ -1,17 +1,14 @@
 import path from "path";
 import fs from "fs"
 
-const MAX_LEN = 10;
+const DEFAULT_MAX_LEN = 10;
 
 // Generate random string
-export function generate(){
-    let ans = ""
+export function generate(length: number = DEFAULT_MAX_LEN): string {
     const subset = "1234567890qwertyuiopasdfghjklzxcvbnm";
-    for(let i=0;i<MAX_LEN;i++){
-        ans += subset[Math.floor(Math.random() * subset.length)]
-    }
-    return ans;
+    return Array.from({ length }, () => subset[Math.floor(Math.random() * subset.length)]).join('');
 }
+
 
 // identify a React project versus a static project 
 export const getProjectType = async (repoPath : string) => {
