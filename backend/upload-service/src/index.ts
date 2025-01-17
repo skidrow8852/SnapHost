@@ -34,8 +34,14 @@ app.post("/deploy", verifyUserAccessToken, async (req, res) => {
         }
 
         const project = await prisma.project.findUnique({
-            where: { userId: userId , repoUrl : repoUrl},
-        });
+                where: {
+                    userId_repoUrl: { 
+                        userId: userId,
+                        repoUrl: repoUrl
+                    }
+                }
+            });
+
 
         if (project) {
             return res.status(200).json({ error: "Project already exists" });

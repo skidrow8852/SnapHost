@@ -62,7 +62,8 @@ model Project {
     userId      String                          
     repoUrl     String                          
     createdAt   DateTime @default(now())        
-    updatedAt   DateTime @updatedAt             
+    updatedAt   DateTime @updatedAt
+    type        String             
 
     @@unique([userId, repoUrl])                 
 
