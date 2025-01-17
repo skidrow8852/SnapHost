@@ -31,7 +31,23 @@ app.post("/deploy", async (req, res) => {
             return res.status(400).json({ error: "repoUrl and userId are required" });
         }
 
-        
+         if (userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
+            return res.status(401).json({ error: "Unauthorized" });
+        }
+
+        const project = await prisma.project.findUnique({
+                where: {
+                    userId_repoUrl: { 
+                        userId: userId,
+                        repoUrl: repoUrl
+                    }
+                }
+            });
+
+
+        if (project) {
+            return res.status(200).json({ error: "Project already exists" });
+        }
         
 
 
@@ -82,7 +98,7 @@ app.get("/projects/:userId", verifyUserAccessToken, async (req, res) => {
         if (req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
             return res.status(401).json({ error: "Unauthorized" });
         }
-        let key = `projects:${req.params?.userId?.toLowerCase()}`
+        const key = `projects:${req.params?.userId?.toLowerCase()}`
         const value = await listener.get(key);
             if (value) {
                 const data = JSON.parse(value);
