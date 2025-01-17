@@ -12,12 +12,11 @@ export const uploadFile = async (fileName: string, localFilePath: string) => {
     try {
         const normalizedFileName = fileName.replace(/\\/g, "/");
         const fileContent = fs.readFileSync(localFilePath);
-        const response = await s3.upload({
+        await s3.upload({
             Body: fileContent,
             Bucket: "snaphost",
             Key: normalizedFileName,
         }).promise();
-        console.log(response);
     } catch (error) {
         console.error(`Error uploading file ${fileName}:`, error);
     }

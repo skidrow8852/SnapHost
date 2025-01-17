@@ -72,7 +72,7 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
 };
 // Add job processors
 buildQueue.process(async (job) => {
-    const { id, repoUrl, userId , folderToDeploy} = job.data;
+    const { id, repoUrl, userId , name} = job.data;
     try {
         console.log(`Processing deployment for project: ${id}`);
         const result = await deployProject(id, repoUrl);
@@ -82,14 +82,15 @@ buildQueue.process(async (job) => {
                 projectId : id,
                 repoUrl : repoUrl,
                 status: result.status || "deploying",
-                type
+                type,
+                name
             })
             if(project){
                 await listener.del(`projects:${userId.toLowerCase()}`)
             }
 
         await processDeployQueue.add({ id, repoUrl, userId , type})
-        deleteFolder(folderToDeploy);
+        deleteFolder(result.folderToDeploy);
     }
     
     catch(error){
@@ -98,7 +99,7 @@ buildQueue.process(async (job) => {
 });
 
 redeployQueue.process(async (job) => {
-    const { id, repoUrl, userId , folderToDeploy} = job.data;
+    const { id, repoUrl, userId} = job.data;
     try {
         
         console.log(`Processing redeployment for project: ${id}`);
@@ -114,7 +115,7 @@ redeployQueue.process(async (job) => {
             }
     
         await processReDeployQueue.add({ id, repoUrl, userId , type})
-        deleteFolder(folderToDeploy);
+        deleteFolder(result.folderToDeploy);
         
     }catch(error){
         console.error(`Error during task processing for project: ${id}`, error);
@@ -132,7 +133,7 @@ resultQueue.process(async (job) => {
         throw new Error(errorMessage);
     }
 
-    let userIds = io.getConnectedSocketIds();
+    const userIds = io.getConnectedSocketIds();
     try {
         const project = await updateProject(userId,id,{
                 status: 'deployed',

@@ -58,13 +58,15 @@ model VerificationToken {
 
 model Project {
     id          String   @id @default(cuid()) 
-    projectId   String   @unique              
+    projectId   String   @unique
+    name        String              
     userId      String                          
     repoUrl     String                          
     createdAt   DateTime @default(now())        
     updatedAt   DateTime @updatedAt
     type        String        
-    status      String     
+    status      String
+         
 
     @@unique([userId, repoUrl])                 
 

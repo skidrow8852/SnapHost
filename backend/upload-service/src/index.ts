@@ -26,44 +26,55 @@ app.use(express.json());
 // Deploy a project
 app.post("/deploy", async (req, res) => {
     try {
-        const { repoUrl, userId } = req.body;
-        if (!repoUrl || !userId) {
-            return res.status(400).json({ error: "repoUrl and userId are required" });
+        const { repoUrl, userId, name } = req.body;
+
+        if (!repoUrl || !userId || !name) {
+            return res.status(400).json({ error: "repoUrl, userId, and name are required" });
         }
 
-         if (userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
+        if (userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
             return res.status(401).json({ error: "Unauthorized" });
         }
 
-        const project = await prisma.project.findUnique({
-                where: {
-                    userId_repoUrl: { 
-                        userId: userId,
-                        repoUrl: repoUrl
-                    }
+        // Check if a project with the same repoUrl already exists for the user
+        const existingRepoProject = await prisma.project.findUnique({
+            where: {
+                userId_repoUrl: { 
+                    userId: userId,
+                    repoUrl: repoUrl
                 }
-            });
+            }
+        });
 
-
-        if (project) {
-            return res.status(200).json({ error: "Project already exists" });
+        if (existingRepoProject) {
+            return res.status(200).json({ error: "Project with this repoUrl already exists" });
         }
-        
 
+        // Check if a project with the same name already exists for the user
+        const existingNameProject = await prisma.project.findFirst({
+            where: {
+                userId: userId,
+                name: name
+            }
+        });
 
-       
+        if (existingNameProject) {
+            return res.status(200).json({ error: "Project with this name already exists" });
+        }
+
         const projectId = generate();
 
         // Add deployment job to Bull queue
-        await buildQueue.add({ id : projectId, repoUrl, userId });
+        await buildQueue.add({ id: projectId, repoUrl, userId, name });
 
         console.log(`Project ${projectId} added to the build queue for user ${userId}`);
-        res.json({ id : projectId });
+        res.json({ id: projectId });
     } catch (error) {
         console.error("Error deploying project:", error);
         res.status(500).json({ error: "Failed to deploy project" });
     }
 });
+
 
 // Redeploy a project
 app.post("/redeploy", verifyUserAccessToken, async (req, res) => {
