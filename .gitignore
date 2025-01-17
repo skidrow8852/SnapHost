@@ -45,17 +45,17 @@ yarn-error.log*
 # idea files
 .idea
 
-backend/dist
-backend/node_modules
-backend/.env
-backend/upload-service/node_modules
-backend/upload-service/.env
-backend/upload-service/dist
+services/dist
+services/node_modules
+services/.env
+services/upload-service/node_modules
+services/upload-service/.env
+services/upload-service/dist
 
-backend/deploy-service/node_modules
-backend/deploy-service/.env
-backend/deploy-service/dist
+services/deploy-service/node_modules
+services/deploy-service/.env
+services/deploy-service/dist
 
-backend/handler-service/node_modules
-backend/handler-service/.env
-backend/handler-service/dist
+services/handler-service/node_modules
+services/handler-service/.env
+services/handler-service/dist
