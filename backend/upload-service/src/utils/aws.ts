@@ -1,6 +1,7 @@
 import { S3 } from "aws-sdk";
 import fs from "fs";
-
+import dotenv from "dotenv";
+dotenv.config();
 const s3 = new S3({
     accessKeyId : process.env.ACCESS_KEY_ID,
     secretAccessKey : process.env.SECRET_ACCESS_KEY,
@@ -9,11 +10,12 @@ const s3 = new S3({
 
 export const uploadFile = async (fileName: string, localFilePath: string) => {
     try {
+        const normalizedFileName = fileName.replace(/\\/g, "/");
         const fileContent = fs.readFileSync(localFilePath);
         const response = await s3.upload({
             Body: fileContent,
             Bucket: "snaphost",
-            Key: fileName,
+            Key: normalizedFileName,
         }).promise();
         console.log(response);
     } catch (error) {

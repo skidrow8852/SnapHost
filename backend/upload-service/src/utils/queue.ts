@@ -6,8 +6,12 @@ import { deleteFolder, getProjectType } from "./utils";
 import {createProject, updateProject} from "../client/client"
 import fs from "fs";
 import { listener } from "../database/redis";
+import dotenv from "dotenv";
+dotenv.config();
 
 // Initialize Bull Queues
+
+
 const Queue = require ("bull");
 const buildQueue = new Queue("build-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
 const redeployQueue = new Queue("redeploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
@@ -27,7 +31,7 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
         }
         // Clone repository
         console.log(`${isRedeploy ? "Redeploying" : "Deploying"} project: ${id}`);
-        await simpleGit().clone(repoUrl, outputPath, { '--force': isRedeploy ? 'true' : 'false' });
+        await simpleGit().clone(repoUrl, outputPath);
 
         // Identify the project type
         const projectType = await getProjectType(outputPath);
@@ -77,7 +81,7 @@ buildQueue.process(async (job) => {
                 userId : userId,
                 projectId : id,
                 repoUrl : repoUrl,
-                status: result.status,
+                status: result.status || "deploying",
                 type
             })
             if(project){

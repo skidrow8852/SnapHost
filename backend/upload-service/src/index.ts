@@ -6,6 +6,8 @@ import { prisma } from "./client/client";
 import { getUserProjects } from "./client/client";
 const { listener } = require("./database/redis");
 const express = require("express");
+import dotenv from "dotenv";
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -22,30 +24,18 @@ app.use(express.json());
 })();
 
 // Deploy a project
-app.post("/deploy", verifyUserAccessToken, async (req, res) => {
+app.post("/deploy", async (req, res) => {
     try {
         const { repoUrl, userId } = req.body;
         if (!repoUrl || !userId) {
             return res.status(400).json({ error: "repoUrl and userId are required" });
         }
 
-        if (userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
-            return res.status(401).json({ error: "Unauthorized" });
-        }
-
-        const project = await prisma.project.findUnique({
-                where: {
-                    userId_repoUrl: { 
-                        userId: userId,
-                        repoUrl: repoUrl
-                    }
-                }
-            });
+        
+        
 
 
-        if (project) {
-            return res.status(200).json({ error: "Project already exists" });
-        }
+       
         const projectId = generate();
 
         // Add deployment job to Bull queue

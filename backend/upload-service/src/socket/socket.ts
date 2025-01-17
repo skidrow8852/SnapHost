@@ -1,7 +1,8 @@
 import { Server, Socket } from "socket.io";
 import { verify } from "jsonwebtoken";
 const ioRedis = require("socket.io-redis");
-
+import dotenv from "dotenv";
+dotenv.config();
 interface OnlineUsers {
   [key: string]: string;
 }

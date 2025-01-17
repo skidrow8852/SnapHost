@@ -2,6 +2,8 @@
 import express from "express"
 import { S3 } from "aws-sdk";
 import {listener} from "./redis"
+import dotenv from "dotenv";
+dotenv.config();
 const s3 = new S3({
     accessKeyId: process.env.ACCESS_KEY_ID,
     secretAccessKey: process.env.SECRET_ACCESS_KEY,

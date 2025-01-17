@@ -27,23 +27,22 @@ export function buildProject(id: string) {
 }
 
 // Helper to get all files in a directory recursively
-const getAllFiles = (folderPath: string): string[] => {
-    let response: string[] = [];
+export const getAllFiles = (folderPath: string): string[] => {
+    const response: string[] = [];
+    const allFilesFolders = fs.readdirSync(folderPath);
 
-    const allFilesAndFolders = fs.readdirSync(folderPath);
-    allFilesAndFolders.forEach(file => {
-        const fullFilePath = path.join(folderPath, file);
-        const isDirectory = fs.statSync(fullFilePath).isDirectory();
-
-        if (isDirectory) {
-            response = response.concat(getAllFiles(fullFilePath));
+    allFilesFolders.forEach((file) => {
+        const name = path.join(folderPath, file); 
+        if (fs.statSync(name).isDirectory()) {
+            response.push(...getAllFiles(name)); 
         } else {
-            response.push(fullFilePath);
+            response.push(name); 
         }
     });
 
     return response;
 };
+
 
 // Function to copy final dist or build folder files to S3
 export async function copyFinalDist(id: string) {

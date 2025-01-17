@@ -1,6 +1,8 @@
 import jwt from "jsonwebtoken";
 import createError from "http-errors";
 import { v4 as uuidv4 } from "uuid";
+import dotenv from "dotenv";
+dotenv.config();
 
 const {listener} = require("../database/redis");
 const redisClient = listener
