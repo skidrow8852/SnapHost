@@ -3,15 +3,16 @@
 import { db } from "@/server/db";
 import { SigninSchema } from "@/validators/signin-validator";
 import { SignupSchema } from "@/validators/signup-validator";
-import { compare, hash } from "bcrypt"; 
+import { compare, hash } from "bcrypt";
+import { signIn } from "next-auth/react";
 
 export const signup = async (formData: FormData) => {
   const name = formData.get("name");
   const email = formData.get("email");
   const password = formData.get("password");
 
-  // Validate the form data using the SignupSchema
-  const validate = SignupSchema.safeParse({ name, email, password });
+  // Validate form data using schema
+  const validate = SignupSchema.safeParse({ name,email, password });
 
   if (!validate.success) {
     return {
@@ -21,7 +22,7 @@ export const signup = async (formData: FormData) => {
   }
 
   try {
-    // Check if the email already exists in the database
+    // Check if the email already exists
     const existingUser = await db.user.findUnique({
       where: { email: validate.data.email },
     });
@@ -33,6 +34,7 @@ export const signup = async (formData: FormData) => {
       };
     }
 
+    // Hash the password
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const hashedPassword = await hash(validate.data.password, 10);
 
@@ -42,9 +44,23 @@ export const signup = async (formData: FormData) => {
         name: validate.data.name,
         email: validate.data.email,
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        password: hashedPassword, 
+        password: hashedPassword,
       },
     });
+
+    // Sign in the user immediately using credentials
+    const signInResult = await signIn("credentials", {
+      redirect: false,
+      email: validate.data.email,
+      password, 
+    });
+
+    if (!signInResult?.ok) {
+      return {
+        success: false,
+        message: "Failed to create a session. Please sign in manually.",
+      };
+    }
 
     return {
       success: true,
@@ -55,13 +71,14 @@ export const signup = async (formData: FormData) => {
       },
     };
   } catch (error) {
-    console.error("Error creating user:", error);
+    console.error("Error during signup:", error);
     return {
       success: false,
-      message: "Failed to create user. Please try again later.",
+      message: "Failed to sign up. Please try again later.",
     };
   }
 };
+
 
 
 export const signin = async (formData: FormData) => {
