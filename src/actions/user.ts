@@ -1,8 +1,9 @@
 "use server";
 
 import { db } from "@/server/db";
+import { SigninSchema } from "@/validators/signin-validator";
 import { SignupSchema } from "@/validators/signup-validator";
-import { hash } from "bcrypt"; 
+import { compare, hash } from "bcrypt"; 
 
 export const signup = async (formData: FormData) => {
   const name = formData.get("name");
@@ -40,6 +41,7 @@ export const signup = async (formData: FormData) => {
       data: {
         name: validate.data.name,
         email: validate.data.email,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         password: hashedPassword, 
       },
     });
@@ -57,6 +59,64 @@ export const signup = async (formData: FormData) => {
     return {
       success: false,
       message: "Failed to create user. Please try again later.",
+    };
+  }
+};
+
+
+export const signin = async (formData: FormData) => {
+  const email = formData.get("email");
+  const password = formData.get("password");
+
+  // Validate the form data using the SigninSchema
+  const validate = SigninSchema.safeParse({ email, password });
+
+  if (!validate.success) {
+    return {
+      success: false,
+      errors: validate.error.flatten().fieldErrors,
+    };
+  }
+
+  try {
+    // Check if the user exists in the database
+    const existingUser = await db.user.findUnique({
+      where: { email: validate.data.email },
+    });
+
+    if (!existingUser) {
+      return {
+        success: false,
+        message: "Invalid email or password.",
+      };
+    }
+
+     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+    const isPasswordValid = await compare(
+      validate.data.password,
+      existingUser.password || ""
+    );
+
+    if (!isPasswordValid) {
+      return {
+        success: false,
+        message: "Invalid email or password.",
+      };
+    }
+
+    return {
+      success: true,
+      user: {
+        id: existingUser.id,
+        name: existingUser.name,
+        email: existingUser.email,
+      },
+    };
+  } catch (error) {
+    console.error("Error signing in:", error);
+    return {
+      success: false,
+      message: "Failed to sign in. Please try again later.",
     };
   }
 };
