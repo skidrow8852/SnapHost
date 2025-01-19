@@ -26,7 +26,7 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form >
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -54,6 +54,15 @@ export function SignupForm({
                 </span>
               </div>
               <div className="grid gap-6">
+                 <div className="grid gap-2">
+                  <Label htmlFor="email">Name</Label>
+                  <Input
+                    id="name"
+                    type="name"
+                    placeholder="John Doe"
+                    required
+                  />
+                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
