@@ -121,6 +121,20 @@ export const signin = async (formData: FormData) => {
       };
     }
 
+    // Sign in the user immediately using credentials
+    const signInResult = await signIn("credentials", {
+      redirect: false,
+      email: validate.data.email,
+      password, 
+    });
+
+    if (!signInResult?.ok) {
+      return {
+        success: false,
+        message: "Failed to create a session.",
+      };
+    }
+
     return {
       success: true,
       user: {
