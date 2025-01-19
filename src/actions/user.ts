@@ -111,7 +111,7 @@ export const signin = async (formData: FormData) => {
      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const isPasswordValid = await compare(
       validate.data.password,
-      existingUser.password || ""
+      existingUser.password as string || ""
     );
 
     if (!isPasswordValid) {

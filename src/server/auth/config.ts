@@ -59,7 +59,7 @@ export const authConfig: NextAuthConfig = {
     }),
   ],
   pages: {
-    signIn: "/signin",
+    signIn: "/login",
     signOut: "/",
   },
   adapter: PrismaAdapter(db),
@@ -80,5 +80,6 @@ export const authConfig: NextAuthConfig = {
       }
       return session;
     },
+
   },
 };

@@ -10,12 +10,38 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { type SubmitHandler, useForm } from "react-hook-form";
+import { type SignupFormInputs } from "@/validators/signup-validator"
+import { signup } from "@/actions/user"
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SignupFormInputs>()
+
+ // Form submit handler
+  const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
+    const formData = new FormData()
+    formData.append("name", data.name)
+    formData.append("email", data.email)
+    formData.append("password", data.password)
+
+    const result = await signup(formData)
+
+    if (result.success) {
+      console.log("Signup successful:", result.user)
+    } else {
+      console.error("Signup failed:", result.message)
+    }
+  }
+
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -26,7 +52,7 @@ export function SignupForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form >
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -60,8 +86,10 @@ export function SignupForm({
                     id="name"
                     type="name"
                     placeholder="John Doe"
+                    {...register("name", { required: "Name is required" })}
                     required
                   />
+                  {errors.name && <span>{errors.name.message}</span>}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
@@ -69,15 +97,18 @@ export function SignupForm({
                     id="email"
                     type="email"
                     placeholder="m@example.com"
+                    {...register("email", { required: "Email is required" })}
                     required
                   />
+                  {errors.email && <span>{errors.email.message}</span>}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
                     
                   </div>
-                  <Input id="password" type="password" required />
+                  <Input id="password" type="password" required {...register("password", { required: "Password is required" })} />
+                  {errors.password && <span>{errors.password.message}</span>}
                 </div>
                 <Button type="submit" className="w-full">
                   Signup
@@ -85,7 +116,7 @@ export function SignupForm({
               </div>
               <div className="text-center text-sm">
                 Already have an account?{" "}
-                <Link href="/signin" className="underline underline-offset-4">
+                <Link href="/login" className="underline underline-offset-4">
                   Sign in
                 </Link>
               </div>
