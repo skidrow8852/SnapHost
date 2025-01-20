@@ -46,12 +46,18 @@ export const getAllFiles = (folderPath: string): string[] => {
 
 // Function to copy final dist or build folder files to S3
 export async function copyFinalDist(id: string) {
-    const distFolderPath = path.join(__dirname, `output/${id}/dist`);
-    const buildFolderPath = path.join(__dirname, `output/${id}/build`);
-    
+    const distFolderPath = path.join(__dirname, 'output', id, 'dist');
+    const buildFolderPath = path.join(__dirname, 'output', id, 'build');
+
+    // Normalize paths for cross-platform compatibility
+    const normalizedDistFolderPath = path.normalize(distFolderPath);
+    const normalizedBuildFolderPath = path.normalize(buildFolderPath);
+
     // Determine which folder to copy: dist or build
-    const folderToUse = fs.existsSync(distFolderPath) ? distFolderPath : buildFolderPath;
-    const folderName = fs.existsSync(distFolderPath) ? "dist" : "build";
+    const folderToUse = fs.existsSync(normalizedDistFolderPath) 
+        ? normalizedDistFolderPath 
+        : normalizedBuildFolderPath;
+    const folderName = fs.existsSync(normalizedDistFolderPath) ? "dist" : "build";
 
     const allFiles = getAllFiles(folderToUse);
 
@@ -62,8 +68,12 @@ export async function copyFinalDist(id: string) {
 
     for (const file of allFiles) {
         try {
-            const relativePath = `${folderName}/${id}/` + file.slice(folderToUse.length + 1);
-            await uploadFile(relativePath, file);
+            // Generate a relative path and normalize it
+            const relativePath = path.join(folderName, id, path.relative(folderToUse, file));
+            const normalizedRelativePath = relativePath.replace(/\\/g, "/");
+
+            
+            await uploadFile(normalizedRelativePath, file);
         } catch (error) {
             console.error(`Failed to upload file ${file}:`, error);
         }
