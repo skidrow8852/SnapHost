@@ -24,7 +24,7 @@ app.use(express.json());
 })();
 
 // Deploy a project
-app.post("/deploy", async (req, res) => {
+app.post("/deploy",verifyUserAccessToken, async (req, res) => {
     try {
         const { repoUrl, userId, name } = req.body;
 
