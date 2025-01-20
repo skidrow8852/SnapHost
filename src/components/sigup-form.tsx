@@ -1,3 +1,4 @@
+"use client";
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,9 +11,11 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
-import { type SubmitHandler, useForm } from "react-hook-form";
+
+import { type SubmitHandler, useForm } from "react-hook-form"; 
 import { type SignupFormInputs } from "@/validators/signup-validator"
 import { signup } from "@/actions/user"
+import { signIn } from "next-auth/react";
 
 export function SignupForm({
   className,
@@ -26,20 +29,33 @@ export function SignupForm({
   } = useForm<SignupFormInputs>()
 
  // Form submit handler
-  const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
-    const formData = new FormData()
-    formData.append("name", data.name)
-    formData.append("email", data.email)
-    formData.append("password", data.password)
+const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
+    const formData = new FormData();
+    formData.append("name", data.name);
+    formData.append("email", data.email);
+    formData.append("password", data.password);
 
-    const result = await signup(formData)
+    const result = await signup(formData);
 
     if (result.success) {
-      console.log("Signup successful:", result.user)
+      console.log("Signup successful:", result.user);
+
+      // Trigger sign-in after successful signup
+      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+      "use server"
+      const signInResult = await signIn("credentials", {
+        redirect: true,
+        email: data.email,
+        password: data.password,
+      });
+
+      if (!signInResult?.ok) {
+        console.error("Failed to create a session. Please sign in manually.");
+      }
     } else {
-      console.error("Signup failed:", result.message)
+      console.error("Signup failed:", result.message);
     }
-  }
+  };
 
 
   return (
@@ -96,7 +112,7 @@ export function SignupForm({
                   <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="example@example.com"
                     {...register("email", { required: "Email is required" })}
                     required
                   />
@@ -116,7 +132,7 @@ export function SignupForm({
               </div>
               <div className="text-center text-sm">
                 Already have an account?{" "}
-                <Link href="/login" className="underline underline-offset-4">
+                <Link href="/auth/login" className="underline underline-offset-4">
                   Sign in
                 </Link>
               </div>

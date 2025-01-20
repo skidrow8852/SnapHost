@@ -2,7 +2,7 @@
 import express from "express"
 import { S3 } from "aws-sdk";
 import {listener} from "./redis"
-const mime = require("mime");
+const mime = require('mime-types')
 import dotenv from "dotenv";
 dotenv.config();
 const s3 = new S3({
@@ -57,7 +57,7 @@ app.get("/*", async (req, res) => {
         }
 
         // Set the appropriate MIME type
-        const contentType = mime.getType(filePath) || "application/octet-stream";
+        const contentType = mime.lookup(filePath) || "application/octet-stream";
         res.set("Content-Type", contentType);
 
         // Add Cache-Control headers for static assets

@@ -44,7 +44,7 @@ export const authConfig: NextAuthConfig = {
           throw new Error("User not found");
         }
         
-        const isValidPassword = await compare(credentials.password, user.password as string);
+        const isValidPassword = await compare(credentials.password, user.password!);
 
         if (!isValidPassword) {
           throw new Error("Invalid email or password");
@@ -79,6 +79,12 @@ export const authConfig: NextAuthConfig = {
         };
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith(baseUrl)) {
+        return url; 
+      }
+      return `${baseUrl}/dashboard`;
     },
 
   },

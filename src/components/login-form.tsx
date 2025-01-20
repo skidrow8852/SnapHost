@@ -1,3 +1,4 @@
+"use client";
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -10,11 +11,46 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Link from "next/link"
+import { type SubmitHandler, useForm } from "react-hook-form"; 
+import { type SigninFormInputs } from "@/validators/signin-validator"
+import { signIn } from "next-auth/react";
+import { signin } from "@/actions/user";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+
+   const {
+      register,
+      handleSubmit,
+      formState: { errors },
+    } = useForm<SigninFormInputs>()
+  
+   // Form submit handler
+  const onSubmit: SubmitHandler<SigninFormInputs> = async (data) => {
+      const formData = new FormData();
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+  
+      const result = await signin(formData);
+  
+      if (result.success) {
+        console.log("Signup successful:", result.user);
+  
+        const signInResult = await signIn("credentials", {
+          redirect: false,
+          email: data.email,
+          password: data.password,
+        });
+        console.log(signInResult)
+        if (!signInResult?.ok) {
+          console.error("Failed to create a session. Please sign in manually.");
+        }
+      } else {
+        console.error("Signup failed:", result.message);
+      }
+    };
   
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -26,7 +62,7 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-6">
               <div className="flex flex-col gap-4">
                 <Button variant="outline" className="w-full">
@@ -59,9 +95,11 @@ export function LoginForm({
                   <Input
                     id="email"
                     type="email"
-                    placeholder="m@example.com"
+                    placeholder="example@example.com"
                     required
+                    {...register("email", { required: "Email is required" })}
                   />
+                  {errors.email && <span>{errors.email.message}</span>}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
@@ -73,7 +111,8 @@ export function LoginForm({
                       Forgot your password?
                     </a>
                   </div>
-                  <Input id="password" type="password" required />
+                  <Input id="password" type="password" required  {...register("password", { required: "Password is required" })}/>
+                   {errors.password && <span>{errors.password.message}</span>}
                 </div>
                 <Button type="submit" className="w-full">
                   Login
@@ -81,7 +120,7 @@ export function LoginForm({
               </div>
               <div className="text-center text-sm">
                 Don&apos;t have an account?{" "}
-                <Link href="/register" className="underline underline-offset-4">
+                <Link href="/auth/register" className="underline underline-offset-4">
                   Sign up
                 </Link>
               </div>

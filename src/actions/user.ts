@@ -4,7 +4,6 @@ import { db } from "@/server/db";
 import { SigninSchema } from "@/validators/signin-validator";
 import { SignupSchema } from "@/validators/signup-validator";
 import { compare, hash } from "bcrypt";
-import { signIn } from "next-auth/react";
 
 export const signup = async (formData: FormData) => {
   const name = formData.get("name");
@@ -48,19 +47,7 @@ export const signup = async (formData: FormData) => {
       },
     });
 
-    // Sign in the user immediately using credentials
-    const signInResult = await signIn("credentials", {
-      redirect: false,
-      email: validate.data.email,
-      password, 
-    });
-
-    if (!signInResult?.ok) {
-      return {
-        success: false,
-        message: "Failed to create a session. Please sign in manually.",
-      };
-    }
+   
 
     return {
       success: true,
@@ -111,27 +98,13 @@ export const signin = async (formData: FormData) => {
      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
     const isPasswordValid = await compare(
       validate.data.password,
-      existingUser.password as string || ""
+      existingUser.password! || ""
     );
 
     if (!isPasswordValid) {
       return {
         success: false,
         message: "Invalid email or password.",
-      };
-    }
-
-    // Sign in the user immediately using credentials
-    const signInResult = await signIn("credentials", {
-      redirect: false,
-      email: validate.data.email,
-      password, 
-    });
-
-    if (!signInResult?.ok) {
-      return {
-        success: false,
-        message: "Failed to create a session.",
       };
     }
 
