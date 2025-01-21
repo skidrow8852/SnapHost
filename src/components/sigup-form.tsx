@@ -221,6 +221,7 @@ export function SignupForm({
                       {...register("password", {
                         required: "Password is required",
                       })}
+                      className="text-[16px] font-mono font-light"
                     />
                     {errors.password && (
                       <span className="text-sm text-red-500">
