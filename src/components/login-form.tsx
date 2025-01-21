@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label"
 import Link from "next/link"
 import { type SubmitHandler, useForm } from "react-hook-form"; 
 import { type SigninFormInputs } from "@/validators/signin-validator"
-import { signIn } from "next-auth/react";
 import { signin } from "@/actions/user";
 
 export function LoginForm({
@@ -29,24 +28,12 @@ export function LoginForm({
   
    // Form submit handler
   const onSubmit: SubmitHandler<SigninFormInputs> = async (data) => {
-      const formData = new FormData();
-      formData.append("email", data.email);
-      formData.append("password", data.password);
+      
   
-      const result = await signin(formData);
+      const result = await signin(data);
   
-      if (result.success) {
-        console.log("Signup successful:", result.user);
-  
-        const signInResult = await signIn("credentials", {
-          redirect: false,
-          email: data.email,
-          password: data.password,
-        });
-        console.log(signInResult)
-        if (!signInResult?.ok) {
-          console.error("Failed to create a session. Please sign in manually.");
-        }
+      if (result.success) {  
+        console.log("success")
       } else {
         console.error("Signup failed:", result.message);
       }
@@ -96,10 +83,9 @@ export function LoginForm({
                     id="email"
                     type="email"
                     placeholder="example@example.com"
-                    required
                     {...register("email", { required: "Email is required" })}
                   />
-                  {errors.email && <span>{errors.email.message}</span>}
+                  {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
@@ -111,8 +97,8 @@ export function LoginForm({
                       Forgot your password?
                     </a>
                   </div>
-                  <Input id="password" type="password" required  {...register("password", { required: "Password is required" })}/>
-                   {errors.password && <span>{errors.password.message}</span>}
+                  <Input id="password" type="password"  {...register("password", { required: "Password is required" })}/>
+                   {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
                 </div>
                 <Button type="submit" className="w-full">
                   Login

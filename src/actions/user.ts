@@ -1,15 +1,11 @@
 "use server";
-
 import { db } from "@/server/db";
-import { SigninSchema } from "@/validators/signin-validator";
-import { SignupSchema } from "@/validators/signup-validator";
+import { type SigninFormInputs, SigninSchema } from "@/validators/signin-validator";
+import { type SignupFormInputs, SignupSchema } from "@/validators/signup-validator";
 import { compare, hash } from "bcrypt";
 
-export const signup = async (formData: FormData) => {
-  const name = formData.get("name");
-  const email = formData.get("email");
-  const password = formData.get("password");
-
+export const signup = async (data: SignupFormInputs) => {
+  const {name, email, password} = data
   // Validate form data using schema
   const validate = SignupSchema.safeParse({ name,email, password });
 
@@ -68,9 +64,8 @@ export const signup = async (formData: FormData) => {
 
 
 
-export const signin = async (formData: FormData) => {
-  const email = formData.get("email");
-  const password = formData.get("password");
+export const signin = async (data : SigninFormInputs) => {
+  const {email, password} = data
 
   // Validate the form data using the SigninSchema
   const validate = SigninSchema.safeParse({ email, password });

@@ -15,7 +15,6 @@ import Link from "next/link"
 import { type SubmitHandler, useForm } from "react-hook-form"; 
 import { type SignupFormInputs } from "@/validators/signup-validator"
 import { signup } from "@/actions/user"
-import { signIn } from "next-auth/react";
 
 export function SignupForm({
   className,
@@ -30,28 +29,12 @@ export function SignupForm({
 
  // Form submit handler
 const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
-    const formData = new FormData();
-    formData.append("name", data.name);
-    formData.append("email", data.email);
-    formData.append("password", data.password);
-
-    const result = await signup(formData);
+  
+    const result = await signup(data);
 
     if (result.success) {
       console.log("Signup successful:", result.user);
 
-      // Trigger sign-in after successful signup
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      "use server"
-      const signInResult = await signIn("credentials", {
-        redirect: true,
-        email: data.email,
-        password: data.password,
-      });
-
-      if (!signInResult?.ok) {
-        console.error("Failed to create a session. Please sign in manually.");
-      }
     } else {
       console.error("Signup failed:", result.message);
     }
@@ -103,9 +86,9 @@ const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
                     type="name"
                     placeholder="John Doe"
                     {...register("name", { required: "Name is required" })}
-                    required
+                    
                   />
-                  {errors.name && <span>{errors.name.message}</span>}
+                  {errors.name && <span className="text-red-500 text-sm">{errors.name.message}</span>}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
@@ -114,17 +97,17 @@ const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
                     type="email"
                     placeholder="example@example.com"
                     {...register("email", { required: "Email is required" })}
-                    required
+                    
                   />
-                  {errors.email && <span>{errors.email.message}</span>}
+                  {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
                     
                   </div>
-                  <Input id="password" type="password" required {...register("password", { required: "Password is required" })} />
-                  {errors.password && <span>{errors.password.message}</span>}
+                  <Input id="password" type="password" {...register("password", { required: "Password is required" })} />
+                  {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
                 </div>
                 <Button type="submit" className="w-full">
                   Signup
