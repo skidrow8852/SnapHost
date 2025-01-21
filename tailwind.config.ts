@@ -10,7 +10,8 @@ export default {
   			sans: [
   				'var(--font-geist-sans)',
                     ...fontFamily.sans
-                ]
+                ],
+			wixMadefor: ["'Wix Madefor Text'", "sans-serif"],
   		},
   		borderRadius: {
   			lg: 'var(--radius)',

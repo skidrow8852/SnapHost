@@ -4,6 +4,7 @@ import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 import { Toaster } from "@/components/ui/toaster"
 
+
 export const metadata: Metadata = {
   title: "SnapHost - Clone and Deploy Your Projects with Ease",
   description: "SnapHost allows you to clone your GitHub repository and deploy it with minimal setup. Support for static websites and React projects. Effortless hosting and deployment.",
@@ -32,7 +33,12 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${GeistSans.variable}`}>
-      <body>
+      <head>
+        <style>
+          {`@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Wix+Madefor+Text:ital,wght@0,400..800;1,400..800&display=swap');`}
+        </style>
+      </head>
+      <body >
         <main>{children}</main>
         <Toaster />
       </body>

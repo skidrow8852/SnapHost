@@ -107,9 +107,9 @@ export function SignupForm({
     try{
   
       setIsGithubLoading(true)
-       await authClient.signIn.social({
+      await authClient.signIn.social({
             provider: "github",
-            callbackURL : "/dashboard"
+            callbackURL : "/dashboard",
         })
      
     }catch(e){
@@ -148,7 +148,7 @@ export function SignupForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="text-xl">Welcome</CardTitle>
+          <CardTitle className="text-xl font-wixMadefor font-bold">Welcome</CardTitle>
           <CardDescription>
             Sign up with your Github or Google account
           </CardDescription>
@@ -243,10 +243,7 @@ export function SignupForm({
           
         </CardContent>
       </Card>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
-      </div>
+      
     </div>
   );
 }
