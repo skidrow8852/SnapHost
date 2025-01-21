@@ -229,7 +229,7 @@ export function SignupForm({
                       </span>
                     )}
                   </div>
-                  <Button disabled={isLoading} type="submit" className="w-full">
+                  <Button disabled={isLoading} type="submit" className="w-full ">
                     Sign up
                   </Button>
                 </div>

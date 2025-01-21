@@ -1,4 +1,3 @@
-import Navbar from "@/components/navbar";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -16,7 +15,7 @@ export default async function DashboardPage() {
 
   return (
     <div className='mt-10 text-center'>
-      <Navbar />
+      
       <h1 className='text-2xl font-bold underline'>Welcome to the dashboard</h1>
       <ul>
         <li>Name: {user.name}</li>
