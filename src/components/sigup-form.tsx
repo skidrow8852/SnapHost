@@ -115,7 +115,7 @@ const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
               </div>
               <div className="text-center text-sm">
                 Already have an account?{" "}
-                <Link href="/auth/login" className="underline underline-offset-4">
+                <Link href="/login" className="underline underline-offset-4">
                   Sign in
                 </Link>
               </div>
