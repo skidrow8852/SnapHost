@@ -8,13 +8,12 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-// Necessary for Next auth
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String
   email         String
   emailVerified Boolean
-  isPro         Boolean
+  isPro         Boolean        @default(false)
   image         String?
   createdAt     DateTime
   updatedAt     DateTime

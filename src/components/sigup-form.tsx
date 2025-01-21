@@ -1,45 +1,76 @@
 "use client";
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
 
-import { type SubmitHandler, useForm } from "react-hook-form"; 
-import { type SignupFormInputs } from "@/validators/signup-validator"
-import { signup } from "@/actions/user"
+import { type SubmitHandler, useForm } from "react-hook-form";
+import { type SignupFormInputs } from "@/validators/signup-validator";
+import { authClient } from "@/lib/auth-client";
+import React from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function SignupForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
-  } = useForm<SignupFormInputs>()
+  } = useForm<SignupFormInputs>();
 
- // Form submit handler
-const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
-  
-    const result = await signup(data);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const { toast } = useToast();
 
-    if (result.success) {
-      console.log("Signup successful:", result.user);
+  const onSubmit: SubmitHandler<SignupFormInputs> = async (values) => {
+    try {
+      setIsLoading(true);
+      const { name, email, password } = values;
 
-    } else {
-      console.error("Signup failed:", result.message);
+       await authClient.signUp.email(
+        {
+          email,
+          password,
+          name,
+          callbackURL: "/dashboard",
+        },
+        {
+          onRequest: () => setIsLoading(true),
+          onSuccess: () => setIsLoading(false),
+          onError: (ctx) => {
+            setIsLoading(false);
+            
+            setError("email", {
+              type: "manual",
+              message: ctx.error.message,
+            });
+          },
+        },
+      );
+
+
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      console.error(err);
+      setIsLoading(false);
+      toast({
+        title: "An unexpected error occurred.",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
     }
   };
-
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -79,16 +110,19 @@ const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
                 </span>
               </div>
               <div className="grid gap-6">
-                 <div className="grid gap-2">
+                <div className="grid gap-2">
                   <Label htmlFor="email">Name</Label>
                   <Input
                     id="name"
                     type="name"
                     placeholder="John Doe"
                     {...register("name", { required: "Name is required" })}
-                    
                   />
-                  {errors.name && <span className="text-red-500 text-sm">{errors.name.message}</span>}
+                  {errors.name && (
+                    <span className="text-sm text-red-500">
+                      {errors.name.message}
+                    </span>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
@@ -97,19 +131,31 @@ const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
                     type="email"
                     placeholder="example@example.com"
                     {...register("email", { required: "Email is required" })}
-                    
                   />
-                  {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
+                  {errors.email && (
+                    <span className="text-sm text-red-500">
+                      {errors.email.message}
+                    </span>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
                     <Label htmlFor="password">Password</Label>
-                    
                   </div>
-                  <Input id="password" type="password" {...register("password", { required: "Password is required" })} />
-                  {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
+                  <Input
+                    id="password"
+                    type="password"
+                    {...register("password", {
+                      required: "Password is required",
+                    })}
+                  />
+                  {errors.password && (
+                    <span className="text-sm text-red-500">
+                      {errors.password.message}
+                    </span>
+                  )}
                 </div>
-                <Button type="submit" className="w-full">
+                <Button disabled={isLoading} type="submit" className="w-full">
                   Signup
                 </Button>
               </div>
@@ -123,10 +169,10 @@ const onSubmit: SubmitHandler<SignupFormInputs> = async (data) => {
           </form>
         </CardContent>
       </Card>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
+      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.
       </div>
     </div>
-  )
+  );
 }

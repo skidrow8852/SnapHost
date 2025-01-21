@@ -1,44 +1,101 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client";
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Link from "next/link"
-import { type SubmitHandler, useForm } from "react-hook-form"; 
-import { type SigninFormInputs } from "@/validators/signin-validator"
-import { signin } from "@/actions/user";
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import Link from "next/link";
+import { type SubmitHandler, useForm } from "react-hook-form";
+import { type SigninFormInputs } from "@/validators/signin-validator";
+import { authClient } from "@/lib/auth-client";
+import { useToast } from "@/hooks/use-toast";
+import React from "react";
+
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors },
+  } = useForm<SigninFormInputs>();
 
-   const {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = useForm<SigninFormInputs>()
-  
-   // Form submit handler
-  const onSubmit: SubmitHandler<SigninFormInputs> = async (data) => {
-      
-  
-      const result = await signin(data);
-  
-      if (result.success) {  
-        console.log("success")
-      } else {
-        console.error("Signup failed:", result.message);
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
+  const { toast } = useToast();
+
+  // Form submit handler
+const onSubmit: SubmitHandler<SigninFormInputs> = async (values) => {
+  setIsLoading(true);
+  try {
+    const { email, password } = values;
+    await authClient.signIn.email(
+      {
+        email,
+        password,
+        callbackURL: "/dashboard",
+      },
+      {
+        onRequest: () => setIsLoading(true),
+        onSuccess: async (ctx) => {
+          
+          const userId = ctx.data.user.id as string;
+          const response = await fetch("/api/token", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userId }),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            const authToken = data.authToken;
+
+            if (authToken) {
+              localStorage.setItem("bearer_token", authToken as string);
+            }
+            setIsLoading(false);
+          } else {
+          
+            toast({
+              title: "Token generation failed.",
+              description: "Please try again later.",
+              variant: "destructive",
+            });
+          }
+        },
+        onError: (ctx) => {
+          setIsLoading(false);
+          setError("email", {
+            type: "manual",
+            message: ctx.error.message,
+          });
+        },
       }
-    };
-  
+    );
+  } catch (err) {
+    console.error(err);
+    setIsLoading(false);
+    toast({
+      title: "An unexpected error occurred.",
+      description: "Please try again later.",
+      variant: "destructive",
+    });
+  }
+};
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -85,7 +142,11 @@ export function LoginForm({
                     placeholder="example@example.com"
                     {...register("email", { required: "Email is required" })}
                   />
-                  {errors.email && <span className="text-red-500 text-sm">{errors.email.message}</span>}
+                  {errors.email && (
+                    <span className="text-sm text-red-500">
+                      {errors.email.message}
+                    </span>
+                  )}
                 </div>
                 <div className="grid gap-2">
                   <div className="flex items-center">
@@ -97,10 +158,20 @@ export function LoginForm({
                       Forgot your password?
                     </a>
                   </div>
-                  <Input id="password" type="password"  {...register("password", { required: "Password is required" })}/>
-                   {errors.password && <span className="text-red-500 text-sm">{errors.password.message}</span>}
+                  <Input
+                    id="password"
+                    type="password"
+                    {...register("password", {
+                      required: "Password is required",
+                    })}
+                  />
+                  {errors.password && (
+                    <span className="text-sm text-red-500">
+                      {errors.password.message}
+                    </span>
+                  )}
                 </div>
-                <Button type="submit" className="w-full">
+                <Button disabled={isLoading} type="submit" className="w-full">
                   Login
                 </Button>
               </div>
@@ -114,10 +185,10 @@ export function LoginForm({
           </form>
         </CardContent>
       </Card>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary  ">
+      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
         By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
         and <a href="#">Privacy Policy</a>.
       </div>
     </div>
-  )
+  );
 }

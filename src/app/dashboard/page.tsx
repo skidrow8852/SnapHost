@@ -1,8 +1,29 @@
+import Navbar from "@/components/navbar";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-function Dasboard() {
+export default async function DashboardPage() {
+  const session = await auth.api.getSession({
+    headers: await headers()
+  });
+
+  if (!session) {
+    return redirect('/login')
+  }
+  const user = session?.user;
+
+
   return (
-    <div>Dasboard</div>
-  )
+    <div className='mt-10 text-center'>
+      <Navbar />
+      <h1 className='text-2xl font-bold underline'>Welcome to the dashboard</h1>
+      <ul>
+        <li>Name: {user.name}</li>
+        <li>Email: {user.email}</li>
+        <li>Token : {session?.session?.token}</li>
+      </ul>
+      
+    </div>
+  );
 }
-
-export default Dasboard
