@@ -65,7 +65,6 @@ export function DialogDeploy({ children }: { children: React.ReactNode }) {
     setProjectId("");
   };
 
-
   const Submit = async () => {
     const result = validateInputs();
     if (result.isValid) {
@@ -83,20 +82,24 @@ export function DialogDeploy({ children }: { children: React.ReactNode }) {
       <DialogContent className="sm:rounded-2xl md:rounded-2xl lg:rounded-2xl">
         {success ? (
           <div className="flex w-full content-center items-center justify-center">
-            <div className="text-center  w-full pt-10 pb-10" style={{
-    backgroundImage: "url('/assets/success-bg.png')",
-    backgroundPosition: "center center", 
-
-    backgroundSize: "contain",
-  }}>
-              <div className="flex justify-center items-center pb-5">
-
-              <Image
-                src="/assets/success.png"
-                alt="success"
-                width={150}
-                height={100}
-              />
+            <div
+              className="w-full mb-10 mt-10 text-center"
+              style={{
+                backgroundImage: "url('/assets/success-bg.png')",
+                backgroundPosition: "center center",
+                backgroundRepeat: "no-repeat",
+                backgroundSize: "contain",
+              }}
+            >
+              <div className="flex items-center justify-center pb-5">
+                <Image
+                  src="/assets/success.png"
+                  alt="success"
+                  width={150}
+                  height={100}
+                  sizes="(max-width: 768px) 100vw"
+                  
+                />
               </div>
               <p className="text-md mb-2 mt-4 font-wixMadefor font-semibold text-[#2A2C33]">
                 Project created successfully!
