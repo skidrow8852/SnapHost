@@ -38,8 +38,8 @@ export default async function Navbar() {
   }
 
   return (
-    <div className="border-b px-4">
-      <div className="max-w-8xl mx-auto flex items-center justify-between py-10 sm:pl-2 sm:pr-2 md:pl-20 md:pr-20 lg:pl-20 lg:pr-20">
+    <div >
+      <div className="max-w-8xl max-md:pl-4 max-md:pr-4 mx-auto flex items-center justify-between py-10 max-sm:pl-4 max-sm:pr-4 md:pl-20 md:pr-20 lg:pl-20 lg:pr-20">
         <div className="flex items-center justify-center text-primary-foreground">
           <Image
             width={50}
