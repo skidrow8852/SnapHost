@@ -8,7 +8,7 @@ export default function Search() {
       <Input
         type="search"
         placeholder="Search projects"
-        className="pl-8 border border-[#D6DFE6] rounded-xl text-[#B6BBBF] h-11 w-80 max-sm:w-full max-md:w-full"
+        className="pl-8 border border-[#D6DFE6] placeholder:text-[#B6BBBF] text-[#2A2C33] font-wixMadefor font-normal rounded-2xl h-11 w-80 max-sm:w-full max-md:w-full"
       />
     </div>
   );

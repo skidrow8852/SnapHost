@@ -41,6 +41,7 @@ export default async function Navbar() {
     <div >
       <div className="max-w-8xl max-md:pl-4 max-md:pr-4 mx-auto flex items-center justify-between py-10 max-sm:pl-4 max-sm:pr-4 md:pl-20 md:pr-20 lg:pl-20 lg:pr-20">
         <div className="flex items-center justify-center text-primary-foreground">
+          <Link href="/dashboard/">
           <Image
             width={50}
             height={50}
@@ -48,6 +49,7 @@ export default async function Navbar() {
             src="/assets/logo.png"
             alt="logo"
           />
+          </Link>
         </div>
 
         <div className="flex items-center justify-between gap-x-5">
