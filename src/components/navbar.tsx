@@ -109,9 +109,9 @@ export default async function Navbar() {
               <SettingsForm name={session.user.name ?? ""} email={session.user.email ?? ""} />
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="outline" className="rounded-xl">Cancel</Button>
+                  <Button variant="outline" className="rounded-2xl h-11">Cancel</Button>
                 </DialogClose>
-                <Button className="rounded-xl">Delete</Button>
+                <Button className="rounded-2xl bg-[#2A2C33] h-11 pl-5 pr-5">Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

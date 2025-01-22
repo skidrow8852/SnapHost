@@ -1,7 +1,7 @@
 "use client"
 import { DialogDeploy } from '@/components/deploy-form'
 import { Button } from '@/components/ui/button'
-import { MoveRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import React from 'react'
 
@@ -30,7 +30,7 @@ function Projects() {
             <DialogDeploy>
                 <Button className="flex h-11 justify-center rounded-2xl bg-[#2A2C33]">
                   Deploy new project
-                  <MoveRight color="white" fill="white" />
+                  <ArrowRight color="white"  />
                 </Button>
               </DialogDeploy>
         </div>
