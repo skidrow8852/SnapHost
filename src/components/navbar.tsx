@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Bell, LogOut } from "lucide-react";
+import { Bell, LogOut, Settings } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,18 +13,28 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-
 import Upgrade from "./ui/upgrade";
-import SettingsUi from "./ui/settings";
 import Link from "next/link";
+import NotificationDropdown from "./notification";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import SettingsForm from "./settings-form";
 
 export default async function Navbar() {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-    if (!session) {
-    return redirect('/login')
+  if (!session) {
+    return redirect("/login");
   }
 
   return (
@@ -42,45 +52,67 @@ export default async function Navbar() {
 
         <div className="flex items-center justify-between gap-x-5">
           <Link href="/dashboard/support">
-          <Button className="bg-pink relative h-10 w-10 rounded-xl border border-[#D6DFE6] text-xl font-bold text-[#B6BBBF] hover:bg-[rgba(182,187,191,0.1)]">
-            ?
-          </Button>
+            <Button className="bg-pink relative h-10 w-10 rounded-xl border border-[#D6DFE6] text-xl font-bold text-[#B6BBBF] hover:bg-[rgba(182,187,191,0.1)]">
+              ?
+            </Button>
           </Link>
-          
 
-          <Button className="bg-pink relative h-10 w-10 rounded-xl border border-[#D6DFE6] hover:bg-[rgba(182,187,191,0.1)]">
-            <Bell color="#B6BBBF" fill="#B6BBBF" />
-            <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-gradient-to-tr from-[#F876C0] to-[#FED90C]"></span>
-          </Button>
+          <NotificationDropdown>
+            <Button className="bg-pink relative h-10 w-10 rounded-xl border border-[#D6DFE6] hover:bg-[rgba(182,187,191,0.1)]">
+              <Bell color="#B6BBBF" fill="#B6BBBF" />
+              <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-gradient-to-tr from-[#F876C0] to-[#FED90C]"></span>
+            </Button>
+          </NotificationDropdown>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Avatar>
-                <AvatarImage src={session?.user?.image ?? ""} />
-                <AvatarFallback>
-                  {session?.user?.name?.slice(0, 2) ?? ""}
-                </AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              
-              <SettingsUi name={session?.user?.name ?? ""} email={session?.user?.email ?? ""} />
-              <DropdownMenuItem
-                onClick={async () => {
-                  "use server";
-                  await auth.api.signOut({
-                    headers: await headers(),
-                  });
-                  redirect("/login");
-                }}
-              >
-                <LogOut />
-                Logout
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <Upgrade />
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Dialog >
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Avatar>
+                  <AvatarImage src={session?.user?.image ?? ""} />
+                  <AvatarFallback>
+                    {session?.user?.name?.slice(0, 2) ?? ""}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                  <DialogTrigger>
+                <DropdownMenuItem>
+                    <Settings />
+                    Settings
+                </DropdownMenuItem>
+                  </DialogTrigger>
+                <DropdownMenuItem
+                  onClick={async () => {
+                    "use server";
+                    await auth.api.signOut({
+                      headers: await headers(),
+                    });
+                    redirect("/login");
+                  }}
+                >
+                  <LogOut />
+                  Logout
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <Upgrade />
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DialogContent className="lg:rounded-2xl sm:max-w-md sm:rounded-2xl md:rounded-2xl">
+              <DialogHeader>
+                <DialogTitle>Settings</DialogTitle>
+                <DialogDescription>
+                 Make changes to your profile here. Click save when you&apos;re done.
+                </DialogDescription>
+              </DialogHeader>
+              <SettingsForm name={session.user.name ?? ""} email={session.user.email ?? ""} />
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline" className="rounded-xl">Cancel</Button>
+                </DialogClose>
+                <Button className="rounded-xl">Delete</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>
