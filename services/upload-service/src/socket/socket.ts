@@ -16,9 +16,9 @@ module.exports = {
   init: (httpServer: any) => {
     io = new Server(httpServer, {
       cors: {
-        origin: `${process.env.URL_ORIGIN_ACCESS}`,
+        origin: `${process.env.URL_FRONTEND_ACCESS}`,
       },
-      transports: ["websocket"],
+      transports: ["websocket","polling"],
       adapter: ioRedis({
         host: process.env.REDIS_HOST,
         port: process.env.REDIS_PORT,

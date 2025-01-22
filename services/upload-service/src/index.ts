@@ -4,16 +4,109 @@ import { revokeToken, verifyUserAccessToken } from "./utils/verifyToken";
 import { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue, processRemoveProject} from "./utils/queue";
 import { prisma } from "./client/client"; 
 import { getUserProjects } from "./client/client";
+import IoRedisClient from "ioredis";
 const { listener } = require("./database/redis");
 const express = require("express");
+const compression = require("compression")
+const setRateLimit = require("express-rate-limit");
+const rateLimiRedisClient = new IoRedisClient();
+const hpp = require("hpp");
+const helmet = require("helmet");
+
+import { RedisStore as RateLimitStore } from "rate-limit-redis";
 import dotenv from "dotenv";
 dotenv.config();
 
+
+////// ************************ Server Config **********************************
 const app = express();
-app.use(cors());
+app.use(
+    cors({
+    origin: `${process.env.URL_FRONTEND_ACCESS}`,
+    methods: "GET,POST,PUT,DELETE"
+  }),
+);
 app.use(express.json());
 
+/// compress request data
+app.use(compression({ level: 6, threshold: 0 }));
 
+
+app.disable("x-powered-by");
+
+
+const rateLimitMiddleware = setRateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  message: "You have exceeded your 60 requests per minute limit.",
+  legacyHeaders: false,
+  store: new RateLimitStore({
+    // @ts-expect-error - Known issue: the `call` function is not present in @types/ioredis
+    sendCommand: (...args: string[]) => rateLimiRedisClient.call(...args),
+  }),
+});
+app.use(rateLimitMiddleware)
+
+// to protect against HTTP Parameter Pollution attacks
+app.use(hpp());
+
+
+// Headers Security with Helmet
+app.use(
+  helmet.contentSecurityPolicy({
+    directives: {
+      defaultSrc: [
+        "'self'",
+      ],
+      scriptSrc: [
+        "'self'",
+      ],
+      styleSrc: [
+        "'self'",
+      ],
+      imgSrc: [
+        "'self'",
+      ],
+      connectSrc: [
+        "'self'",
+        `${process.env.URL_FRONTEND_ACCESS}`
+      ],
+      objectSrc: [
+        "'self'",
+      ],
+      frameSrc: [
+        "'self'"
+      ],
+      formAction: [
+        "'self'"
+      ],
+      fontSrc: [
+        "'self'"
+      ],
+      frameAncestors: [
+       "'self'"
+      ],
+    },
+  }),
+);
+
+// Prevent browsers from inferring the MIME type, reducing risk of drive-by downloads
+app.use(helmet.noSniff());
+
+// Prevent Internet Explorer from executing downloads in the site’s context
+app.use(helmet.ieNoOpen());
+
+// Enforce HTTP Strict Transport Security (HSTS) to force HTTPS connections
+app.use(helmet.hsts({ maxAge: 31536000, includeSubDomains: true }));
+
+// Set a Referrer-Policy header to limit referrer information sent to other sites
+app.use(helmet.referrerPolicy({ policy: "same-origin" }));
+
+// Enable basic XSS protection in the browser by setting the X-XSS-Protection header
+app.use(helmet.xssFilter());
+
+
+// Connect to Redis 
 (async () => {
     try {
         await listener.connect();
@@ -23,8 +116,10 @@ app.use(express.json());
     }
 })();
 
+////// ************************ Routes **********************************
+
 // Deploy a project
-app.post("/deploy",verifyUserAccessToken, async (req, res) => {
+app.post("/api/deploy",verifyUserAccessToken, async (req, res) => {
     try {
         const { repoUrl, userId, name } = req.body;
 
@@ -77,7 +172,7 @@ app.post("/deploy",verifyUserAccessToken, async (req, res) => {
 
 
 // Redeploy a project
-app.post("/redeploy", verifyUserAccessToken, async (req, res) => {
+app.post("/api/redeploy", verifyUserAccessToken, async (req, res) => {
     try {
         const { userId, id } = req.body;
 
@@ -104,7 +199,7 @@ app.post("/redeploy", verifyUserAccessToken, async (req, res) => {
 });
 
 // Get all user projects
-app.get("/projects/:userId", verifyUserAccessToken, async (req, res) => {
+app.get("/api/projects/:userId", verifyUserAccessToken, async (req, res) => {
     try {
         if (req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
             return res.status(401).json({ error: "Unauthorized" });
@@ -140,7 +235,7 @@ app.get("/projects/:userId", verifyUserAccessToken, async (req, res) => {
 
 
 // delete a project
-app.delete("/remove/user/:userId/project/:id", verifyUserAccessToken, async (req, res) => {
+app.delete("/api/remove/user/:userId/project/:id", verifyUserAccessToken, async (req, res) => {
     try {
         if (req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
             return res.status(401).json({ error: "Unauthorized" });
@@ -170,7 +265,7 @@ app.delete("/remove/user/:userId/project/:id", verifyUserAccessToken, async (req
 });
 
 // Revoke token
-app.post("/revoke", verifyUserAccessToken, async (req, res) => {
+app.post("/api/revoke", verifyUserAccessToken, async (req, res) => {
     try {
         const { userId } = req.body;
 
@@ -186,6 +281,8 @@ app.post("/revoke", verifyUserAccessToken, async (req, res) => {
     }
 });
 
+
+////// ************************ Server config **********************************
 const shutdown = async () => {
     console.log("Shutting down...");
     await listener.disconnect();
