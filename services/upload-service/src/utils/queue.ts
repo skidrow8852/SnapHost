@@ -3,7 +3,7 @@ import simpleGit from "simple-git";
 import { getAllFiles } from "./file";
 import { uploadFile } from "./aws";
 import { deleteFolder, getProjectType } from "./utils";
-import {createProject, updateProject} from "../client/client"
+import { createProject, updateProject } from "../client/client";
 import fs from "fs";
 import { listener } from "../database/redis";
 import dotenv from "dotenv";
@@ -11,19 +11,34 @@ dotenv.config();
 
 // Initialize Bull Queues
 
-
-const Queue = require ("bull");
-const buildQueue = new Queue("build-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
-const redeployQueue = new Queue("redeploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
-const resultQueue = new Queue("result-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
-const processDeployQueue = new Queue("proccess-deploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
-const processReDeployQueue = new Queue("proccess-redeploy-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
-const processRemoveProject = new Queue("proccess-remove-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
+const Queue = require("bull");
+const buildQueue = new Queue("build-queue", {
+    redis: { host: process.env.REDIS_HOST, port: 6379 },
+});
+const redeployQueue = new Queue("redeploy-queue", {
+    redis: { host: process.env.REDIS_HOST, port: 6379 },
+});
+const resultQueue = new Queue("result-queue", {
+    redis: { host: process.env.REDIS_HOST, port: 6379 },
+});
+const processDeployQueue = new Queue("proccess-deploy-queue", {
+    redis: { host: process.env.REDIS_HOST, port: 6379 },
+});
+const processReDeployQueue = new Queue("proccess-redeploy-queue", {
+    redis: { host: process.env.REDIS_HOST, port: 6379 },
+});
+const processRemoveProject = new Queue("proccess-remove-queue", {
+    redis: { host: process.env.REDIS_HOST, port: 6379 },
+});
 const io = require("../socket/socket");
 
-
 // Function to deploy or redeploy a project
-const deployProject = async (id: string, repoUrl: string, userId : string , isRedeploy = false) => {
+const deployProject = async (
+    id: string,
+    repoUrl: string,
+    userId: string,
+    isRedeploy = false,
+) => {
     const outputPath = path.join(__dirname, `output/${id}`);
     const git = simpleGit();
     try {
@@ -41,7 +56,7 @@ const deployProject = async (id: string, repoUrl: string, userId : string , isRe
         const latestCommit = commitDetails.latest;
         const commitMessage = latestCommit?.message;
         const commitTime = new Date(latestCommit?.date).toLocaleString();
-        
+
         // Get the current branch
         const currentBranch = await git.revparse(["--abbrev-ref", "HEAD"]);
 
@@ -64,16 +79,18 @@ const deployProject = async (id: string, repoUrl: string, userId : string , isRe
             files.forEach((file) => {
                 const fileName = path.basename(file);
                 const destPath = path.join(distPath, fileName);
-                fs.renameSync(file, destPath); 
+                fs.renameSync(file, destPath);
             });
 
-            folderToDeploy = distPath; 
+            folderToDeploy = distPath;
         }
-        if(projectType == "unknown"){
-            notifyUser("type-unknown", userId, { id, message : `Project type 'Unknown' ${isRedeploy} failed` });
+        if (projectType == "unknown") {
+            notifyUser("type-unknown", userId, {
+                id,
+                message: `Project type 'Unknown' ${isRedeploy} failed`,
+            });
             deleteFolder(folderToDeploy);
-            throw new Error("Project type 'Unknown'")
-
+            throw new Error("Project type 'Unknown'");
         }
         const filesToUpload = getAllFiles(folderToDeploy);
         for (const file of filesToUpload) {
@@ -81,123 +98,112 @@ const deployProject = async (id: string, repoUrl: string, userId : string , isRe
             await uploadFile(relativePath, file);
         }
 
-        console.log(`${isRedeploy ? "Redeployment" : "Deployment"} complete for project: ${id}`);
-        return { 
-            status: isRedeploy ? "redeploying" : "deploying", 
+        console.log(
+            `${isRedeploy ? "Redeployment" : "Deployment"} complete for project: ${id}`,
+        );
+        return {
+            status: isRedeploy ? "redeploying" : "deploying",
             type: projectType,
             folderToDeploy,
             commitMessage,
             commitTime,
-            currentBranch
+            currentBranch,
         };
     } catch (error) {
-        console.error(`Error during ${isRedeploy ? "redeployment" : "deployment"} for project: ${id}`, error);
+        console.error(
+            `Error during ${isRedeploy ? "redeployment" : "deployment"} for project: ${id}`,
+            error,
+        );
         throw error;
     }
 };
 
 // Function to notify the user about deployment/redeployment process
-const notifyUser = (type : string, userId : string, message : any) => {
+const notifyUser = (type: string, userId: string, message: any) => {
     const userIds = io.getConnectedSocketIds();
-         // Emit success message to connected clients
-        if (userIds[userId?.toLowerCase()]) {
-            userIds[userId?.toLowerCase()]?.forEach(
-              (element: string) => {
-                io.getIO()
-                  .to(element)
-                  .emit(type, message);
-              },
-            );
-        }
-}
+    // Emit success message to connected clients
+    if (userIds[userId?.toLowerCase()]) {
+        userIds[userId?.toLowerCase()]?.forEach((element: string) => {
+            io.getIO().to(element).emit(type, message);
+        });
+    }
+};
 
 // Add job processors
 buildQueue.process(async (job) => {
-    const { id, repoUrl, userId , name} = job.data;
+    const { id, repoUrl, userId, name } = job.data;
     try {
         console.log(`Processing deployment for project: ${id}`);
-        const result = await deployProject(id, repoUrl,userId);
-        const type = result?.type || "unknown"
-        
+        const result = await deployProject(id, repoUrl, userId);
+        const type = result?.type || "unknown";
 
-            const project = await createProject({
-                    userId : userId,
-                    projectId : id,
-                    repoUrl : repoUrl,
-                    status: result.status || "deploying",
-                    type,
-                    name,
-                    commit : result.commitMessage,
-                    branch : result.currentBranch,
-                    time : result.commitTime
-                })
-                if(project){
-                    await listener.del(`projects:${userId.toLowerCase()}`)
-                }
-    
-            await processDeployQueue.add({ id, repoUrl, userId , type})
-        
+        const project = await createProject({
+            userId: userId,
+            projectId: id,
+            repoUrl: repoUrl,
+            status: result.status || "deploying",
+            type,
+            name,
+            commit: result.commitMessage,
+            branch: result.currentBranch,
+            time: result.commitTime,
+        });
+        if (project) {
+            await listener.del(`projects:${userId.toLowerCase()}`);
+        }
 
+        await processDeployQueue.add({ id, repoUrl, userId, type });
 
         deleteFolder(result.folderToDeploy);
-    }
-    
-    catch(error){
+    } catch (error) {
         console.error(`Error during task processing for project: ${id}`, error);
     }
 });
 
 redeployQueue.process(async (job) => {
-    const { id, repoUrl, userId} = job.data;
+    const { id, repoUrl, userId } = job.data;
     try {
-        
         console.log(`Processing redeployment for project: ${id}`);
-        const result = await deployProject(id, repoUrl, userId,true);
+        const result = await deployProject(id, repoUrl, userId, true);
         const type = result?.type || "unknown";
-        
 
+        const project = await updateProject(userId, id, {
+            status: result?.status,
+            type,
+        });
 
-            const project = await updateProject(userId,id,{
-                    status: result?.status,
-                    type
-                })
-    
-                if(project){
-                    await listener.del(`projects:${userId.toLowerCase()}`)
-                }
-        
-            await processReDeployQueue.add({ id, repoUrl, userId , type})
-        
+        if (project) {
+            await listener.del(`projects:${userId.toLowerCase()}`);
+        }
+
+        await processReDeployQueue.add({ id, repoUrl, userId, type });
 
         deleteFolder(result.folderToDeploy);
-        
-    }catch(error){
+    } catch (error) {
         console.error(`Error during task processing for project: ${id}`, error);
-        
     }
 });
-
 
 resultQueue.process(async (job) => {
     const { id, userId, screenshot } = job.data;
     console.log(`Processing result of deployment for project: ${id}`);
 
     if (!userId || !screenshot) {
-        const errorMessage = `Missing required data: ${!userId ? 'userId' : 'screenshot'}`;
+        const errorMessage = `Missing required data: ${!userId ? "userId" : "screenshot"}`;
         console.error(errorMessage);
         throw new Error(errorMessage);
     }
 
     try {
-        const project = await updateProject(userId,id,{
-                status: 'deployed',
-                screenshot: screenshot,
-            })
+        const project = await updateProject(userId, id, {
+            status: "deployed",
+            screenshot: screenshot,
+        });
 
-        if(project){
-                notifyUser("deploy-success", userId, { id, screenshot });
-                await listener.del(`projects:${userId.toLowerCase()}`)
-            }
+        if (project) {
+            notifyUser("deploy-success", userId, { id, screenshot });
+            await listener.del(`projects:${userId.toLowerCase()}`);
+        }
 
         console.log(`Project ${id} successfully deployed`);
     } catch (error) {
@@ -206,5 +212,11 @@ resultQueue.process(async (job) => {
     }
 });
 
-
-export { buildQueue, resultQueue, redeployQueue, processDeployQueue, processReDeployQueue,processRemoveProject};
+export {
+    buildQueue,
+    resultQueue,
+    redeployQueue,
+    processDeployQueue,
+    processReDeployQueue,
+    processRemoveProject,
+};
