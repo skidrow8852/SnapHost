@@ -14,6 +14,7 @@ export default {
                     ...fontFamily.sans
                 ],
 			wixMadefor: ["'Wix Madefor Text'", "sans-serif"],
+			publicSans: ["Public Sans","serif"]
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
