@@ -17,6 +17,23 @@ function Projects() {
 const { token , id} = usePersonStore((state) => state)
 const projects = useProjectStore((state) => state.projects)
 const [isLoading, setIsLoading] = React.useState<boolean>(true);
+const values = [
+  {
+      id  : "123hslkdjslkdjsd",
+  projectId : "project1",
+  name  :    "This is just a test project",
+  userId  :  id,
+  repoUrl  : "https://github.com/skidrow8852/SnapHost.git",
+  createdAt : new Date(),
+  updatedAt : new Date(),
+  image   :   "",
+  commit  :  "This is my first commit",
+  branch  :  "main",
+  time   :   new Date().toLocaleString(),
+  type   :   "react",
+  status  :  "deploying"
+  }
+]
 
 
 
@@ -64,9 +81,19 @@ if(isLoading){
   return (
     <div className='flex justify-center items-center min-h-[70vh]'>
       
-      {projects.length > 0 ? <div className='text-center relative'>
-        <ProjectCard />
-      </div> : <div className='text-center relative'>
+      {values.length > 0 ? <div className="min-h-[70vh] w-full bg-transparent">
+      {/* Hero Section Skeleton */}
+      <div className="max-w-8xl relative mx-auto py-12">
+        {/* Grid Skeleton */}
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {[...values,...values,...values,...values,...values,...values,...values,...values,...values,...values,...values]?.map((data, i) => (
+            <div key={i}>
+              <ProjectCard values={data} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div> : <div className='text-center relative'>
         <div className='relative'>
           <Image 
             src="/assets/project-bg.png" 

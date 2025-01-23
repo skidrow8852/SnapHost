@@ -1,34 +1,33 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 const CardSkeleton = () => (
-  <div className="relative group">
-    <div className="bg-[#F7F7F7] rounded-2xl border border-[#D6DFE6] overflow-hidden h-[280px]">
-      <div className="p-5 space-y-4">
+  <div className="group relative">
+    <div className="h-[340px] overflow-hidden rounded-3xl border-[0.15rem] border-[#D6DFE6]  bg-[#F7F7F7]">
+      <div className="space-y-4 pl-8 pr-8 pb-8">
         {/* Header shimmer */}
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-lg bg-[#D9D9D9] animate-pulse" />
-            <div className="w-2 h-2 rounded-lg bg-[#D9D9D9] animate-pulse" />
-            <div className="w-2 h-2 rounded-lg bg-[#D9D9D9] animate-pulse" />
-            
+          <div className="flex cursor-pointer items-center gap-1 pt-8">
+            <div className="h-2 w-2 animate-pulse rounded-lg bg-[#D9D9D9]" />
+            <div className="h-2 w-2 animate-pulse rounded-lg bg-[#D9D9D9]" />
+            <div className="h-2 w-2 animate-pulse rounded-lg bg-[#D9D9D9]" />
           </div>
-          <div className="space-y-2 pt-8">
-              <div className="w-10 h-10 bg-[#D9D9D9] rounded-xl animate-pulse" />
-            </div>
-          <div className="w-10 h-10  bg-[#D9D9D9] rounded-full animate-pulse" />
+          <div className="space-y-2 pt-16 mt-2">
+            <div className="h-12 w-12 animate-pulse rounded-xl bg-[#D9D9D9]" />
+          </div>
+          <div className="h-10 w-10 animate-pulse rounded-full bg-[#D9D9D9] mt-4" />
         </div>
 
         {/* Title shimmer */}
-        <div className="space-y-2 flex justify-center flex-col items-center">
-          <div className="w-1/2 h-5 bg-[#D9D9D9] rounded-lg animate-pulse" />
-          <div className="w-1/2 h-3 bg-[#D9D9D9] rounded-lg animate-pulse" />
+        <div className="flex flex-col items-center justify-center space-y-2">
+          <div className="h-5 w-1/2 animate-pulse rounded-lg bg-[#D9D9D9]" />
+          <div className="h-3 w-1/2 animate-pulse rounded-lg bg-[#D9D9D9]" />
         </div>
 
         {/* Code block shimmer */}
-        <div className="space-y-2  p-2">
-          <div className="w-full h-8 bg-[#D9D9D9] rounded-xl animate-pulse" />
-          <div className="w-3/4 h-4 bg-[#D9D9D9] rounded-xl animate-pulse" />
-          <div className="w-1/2 h-4 bg-[#D9D9D9] rounded-xl animate-pulse" />
+        <div className="space-y-2 p-2 pt-5">
+          <div className="h-8 w-full animate-pulse rounded-xl bg-[#D9D9D9]" />
+          <div className="h-4 w-3/4 animate-pulse rounded-xl bg-[#D9D9D9] " />
+          <div className="h-4 w-1/2 animate-pulse rounded-xl bg-[#D9D9D9]" />
         </div>
       </div>
     </div>
@@ -38,24 +37,16 @@ const CardSkeleton = () => (
 export default function PageSkeleton() {
   return (
     <div className="min-h-screen w-full bg-transparent">
-
-
       {/* Hero Section Skeleton */}
-      <div className="relative max-w-8xl mx-auto  py-12">
-
-
+      <div className="max-w-8xl relative mx-auto py-12">
         {/* Grid Skeleton */}
-      <div
-  className="
-    grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-10
-  "
->
-  {[...Array(10)].map((_, i) => (
-    <div key={i}>
-      <CardSkeleton />
-    </div>
-  ))}
-</div>
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+          {[...Array(10)].map((_, i) => (
+            <div key={i}>
+              <CardSkeleton />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

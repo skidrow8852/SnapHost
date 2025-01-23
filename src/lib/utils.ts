@@ -9,7 +9,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-
+// check if URL is a valid Github repository URl
 export function isValidGitHubUrl(url: string): boolean {
   try {
     const parsedUrl = new URL(url);
@@ -24,6 +24,24 @@ export function isValidGitHubUrl(url: string): boolean {
     return isGitHub && isValidProtocol && isValidPath;
   } catch (error) {
     return false; 
+  }
+}
+
+// Extract username and repository name from a github URL
+export function extractRepoDetails(repoUrl : string, projectname : string) {
+  try{
+
+    const regex = /https?:\/\/(?:www\.)?github\.com\/([^\/]+)\/([^\/]+)(?:\.git)?/;
+    const match = regex.exec(repoUrl);
+  
+    if (match) {
+      const [_, username, repoName] = match; 
+      return `${username}/${repoName}`;
+    } else {
+      throw new Error("Invalid GitHub repository URL");
+    }
+  }catch(e){
+    return `github.com/${projectname}`
   }
 }
 
