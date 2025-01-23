@@ -22,6 +22,7 @@ import React from "react";
 import { useToast } from "@/hooks/use-toast";
 import { generateToken } from "@/lib/utils";
 import { usePersonStore } from "@/store/user";
+import { useRouter } from "next/navigation";
 
 export function SignupForm({
   className,
@@ -38,7 +39,7 @@ export function SignupForm({
   const [isGithubLoading, setIsGithubLoading] = React.useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = React.useState<boolean>(false);
   const { toast } = useToast();
-
+  const router = useRouter();
   const onSubmit: SubmitHandler<SignupFormInputs> = async (values) => {
     try {
       setIsLoading(true);
@@ -50,6 +51,7 @@ export function SignupForm({
           password,
           name,
           callbackURL: "/dashboard",
+          
         },
         {
           onRequest: () => setIsLoading(true),
@@ -67,6 +69,7 @@ export function SignupForm({
               });
 
               
+              router.push('/dashboard');
               setIsLoading(false);
             } else {
               toast({
