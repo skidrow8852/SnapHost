@@ -1,3 +1,4 @@
+import { type NotificationTpes } from '@/lib/types'
 import { create } from 'zustand'
 
 type State = {
@@ -6,6 +7,8 @@ type State = {
   email: string
   token: string
   avatar?: string
+  isPro? : boolean
+  notifications? : NotificationTpes[]
   setUser: (userData: Partial<State>) => void
 }
 
@@ -19,6 +22,8 @@ export const usePersonStore = create<State & Action>((set) => ({
   email: '',
   token: '',
   avatar: '',
+  isPro : false,
+  notifications : [],
   setUser: (userData) => set(() => ({ ...userData })),
   updateUser: (data) => set((state) => ({ ...state, ...data })),
 }))

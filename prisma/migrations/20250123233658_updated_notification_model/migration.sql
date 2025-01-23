@@ -36,6 +36,7 @@ CREATE TABLE "notification" (
     "id" TEXT NOT NULL,
     "value" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "isRead" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
