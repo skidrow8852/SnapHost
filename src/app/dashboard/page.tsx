@@ -1,20 +1,14 @@
-"use client";
+
 
 import { DialogDeploy } from "@/components/deploy-form";
 import Search from "@/components/search";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ChevronDown, Plus } from "lucide-react";
-import React from "react";
 import Projects from "./_components/projects";
+import { Plus } from "lucide-react";
+import Sortby from "@/components/sortby";
 
 export default function DashboardPage() {
-  const [selectedSort, setSelectedSort] = React.useState<string>("activity");
+
 
   return (
     <div className='max-w-8xl lg:pr-20" mx-auto mt-2 flex items-center justify-between max-md:mt-0 max-md:pl-4 max-md:pr-4 max-sm:mt-0 max-sm:pl-4 max-sm:pr-4 md:pl-20 md:pr-20 lg:pl-20'>
@@ -37,34 +31,7 @@ export default function DashboardPage() {
             {/* Search Component */}
             <Search />
             {/* Filter Component */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  className="flex h-11 items-center justify-between rounded-2xl border border-[#D6DFE6] px-4 text-[#2A2C33]"
-                  variant="outline"
-                >
-                  Sort by {selectedSort === "activity" ? "activity" : "name"}{" "}
-                  <ChevronDown color="#2A2C33" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-40">
-                <DropdownMenuCheckboxItem
-                  checked={selectedSort === "activity"}
-                  onCheckedChange={() => setSelectedSort("activity")}
-                  className="cursor-pointer py-2"
-                >
-                  Sort by activity
-                </DropdownMenuCheckboxItem>
-
-                <DropdownMenuCheckboxItem
-                  checked={selectedSort === "name"}
-                  onCheckedChange={() => setSelectedSort("name")}
-                  className="cursor-pointer py-2"
-                >
-                  Sort by name
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Sortby />
 
             {/* create project button Component */}
             <div className="flex max-sm:hidden ">

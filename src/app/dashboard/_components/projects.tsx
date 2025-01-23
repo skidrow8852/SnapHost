@@ -2,126 +2,109 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-"use client"
-import { DialogDeploy } from '@/components/deploy-form'
-import PageSkeleton from '@/components/page-skeleton'
-import { Button } from '@/components/ui/button'
-import { useProjectStore } from '@/store/projects'
-import { usePersonStore } from '@/store/user'
-import { ArrowRight } from 'lucide-react'
-import Image from 'next/image'
-import React from 'react'
-import ProjectCard from './projectCard'
+"use client";
+import { DialogDeploy } from "@/components/deploy-form";
+import PageSkeleton from "@/components/page-skeleton";
+import { Button } from "@/components/ui/button";
+import { useProjectStore } from "@/store/projects";
+import { usePersonStore } from "@/store/user";
+import { ArrowRight } from "lucide-react";
+import Image from "next/image";
+import React from "react";
+import ProjectCard from "./projectCard";
 
 function Projects() {
-const { token , id} = usePersonStore((state) => state)
-const projects = useProjectStore((state) => state.projects)
-const [isLoading, setIsLoading] = React.useState<boolean>(true);
-const values = [
-  {
-      id  : "123hslkdjslkdjsd",
-  projectId : "project1",
-  name  :    "This is just a test project",
-  userId  :  id,
-  repoUrl  : "https://github.com/skidrow8852/SnapHost.git",
-  createdAt : new Date(),
-  updatedAt : new Date(),
-  image   :   "",
-  commit  :  "This is my first commit",
-  branch  :  "main",
-  time   :   new Date().toLocaleString(),
-  type   :   "react",
-  status  :  "deploying"
-  }
-]
+  const { token, id } = usePersonStore((state) => state);
+  const projects = useProjectStore((state) => state.filteredProjects);
+  const allprojects = useProjectStore((state) => state.projects);
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
-
-
-const getUserProjects = async (userId: string, tokenValue: string) => {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_URL_BACKEND_ACCESS}/projects/${userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${tokenValue}`,
-          "Content-Type": "application/json",
+  const getUserProjects = async (userId: string, tokenValue: string) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_URL_BACKEND_ACCESS}/projects/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${tokenValue}`,
+            "Content-Type": "application/json",
+          },
         },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status} ${response.statusText}`);
       }
-    );
 
-    if (!response.ok) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      const data = await response.json();
+      useProjectStore.getState().setProjects(data.result);
+      setIsLoading(false);
+    } catch (e) {
+      console.error("Failed to fetch user projects:", e);
+      setIsLoading(false);
     }
+  };
 
-    const data = await response.json(); 
-    useProjectStore.getState().setProjects(data.result); 
-    setIsLoading(false)
-  } catch (e) {
-    console.error("Failed to fetch user projects:", e);
-    setIsLoading(false)
-  }
-};
+  React.useEffect(() => {
+    if (token.length > 3) {
+      getUserProjects(id, token);
+    }
+  }, [token, id]);
 
-
-React.useEffect(() => {
-  if(token.length > 3){
-    getUserProjects(id, token)
-  }
-},[token,id])
-
-if(isLoading){
-  return (
-      <div className='flex justify-center items-center min-h-[70vh]'>
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[70vh] items-center justify-center">
         <PageSkeleton />
       </div>
     );
-}
-
+  }
 
   return (
-    <div className='flex justify-center items-center min-h-[70vh]'>
-      
-      {values.length > 0 ? <div className="min-h-[70vh] w-full bg-transparent">
-      {/* Hero Section Skeleton */}
-      <div className="max-w-8xl relative mx-auto py-12">
-        {/* Grid Skeleton */}
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-          {[...values,...values,...values,...values,...values,...values,...values,...values,...values,...values,...values]?.map((data, i) => (
-            <div key={i}>
-              <ProjectCard values={data} />
+    <div className="flex min-h-[70vh] items-center justify-center">
+      {projects?.length > 0 ? (
+        <div className="min-h-[70vh] w-full bg-transparent">
+          {/* Hero Section Skeleton */}
+          <div className="max-w-8xl relative mx-auto py-12">
+            {/* Grid Skeleton */}
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+              {projects?.map((data, i) => (
+                <div key={i}>
+                  <ProjectCard values={data} />
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
         </div>
-      </div>
-    </div> : <div className='text-center relative'>
-        <div className='relative'>
-          <Image 
-            src="/assets/project-bg.png" 
-            alt="new project" 
-            width={500} 
-            height={500} 
-            className=' relative' 
-          />
-         
-        </div>
-        <p className='text-xl text-black font-wixMadefor font-normal mt-4'>
-          You didn’t deploy any projects yet
-        </p>
-        <p className='text-[#B1B4B7] font-normal pt-2 pb-8'>
-          Create a new project using the Deploy button
-        </p>
-        <div className='w-full flex justify-center'>
-
+      ) : (
+        <div className="relative text-center">
+          <div className="relative">
+            <Image
+              src="/assets/project-bg.png"
+              alt="new project"
+              width={500}
+              height={500}
+              className="relative"
+            />
+          </div>
+          <p className="mt-4 font-wixMadefor text-xl font-normal text-black">
+            {allprojects?.length > 0
+              ? "No project found"
+              : "You didn’t deploy any projects yet"}
+          </p>
+          <p className="pb-8 pt-2 font-normal text-[#B1B4B7]">
+            Create a new project using the Deploy button
+          </p>
+          <div className="flex w-full justify-center">
             <DialogDeploy>
-                <Button className="flex h-11 justify-center rounded-2xl bg-[#2A2C33]">
-                  Deploy new project
-                  <ArrowRight color="white"  />
-                </Button>
-              </DialogDeploy>
+              <Button className="flex h-11 justify-center rounded-2xl bg-[#2A2C33]">
+                Deploy new project
+                <ArrowRight color="white" />
+              </Button>
+            </DialogDeploy>
+          </div>
         </div>
-      </div>}
+      )}
     </div>
-  )
+  );
 }
 
-export default Projects
+export default Projects;
