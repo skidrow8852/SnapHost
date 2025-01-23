@@ -34,6 +34,10 @@ model Project {
   repoUrl   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  image     String?
+  commit    String
+  branch    String
+  time      String
   type      String
   status    String
   user      User     @relation(fields: [userId], references: [id])

@@ -21,17 +21,29 @@ const processReDeployQueue = new Queue("proccess-redeploy-queue", { redis: { hos
 const processRemoveProject = new Queue("proccess-remove-queue", { redis: { host: process.env.REDIS_HOST, port: 6379 } });
 const io = require("../socket/socket");
 
+
 // Function to deploy or redeploy a project
 const deployProject = async (id: string, repoUrl: string, isRedeploy = false) => {
     const outputPath = path.join(__dirname, `output/${id}`);
+    const git = simpleGit();
     try {
         // Create output directory if it doesn't exist
         if (!fs.existsSync(outputPath)) {
             fs.mkdirSync(outputPath, { recursive: true });
         }
+
         // Clone repository
         console.log(`${isRedeploy ? "Redeploying" : "Deploying"} project: ${id}`);
-        await simpleGit().clone(repoUrl, outputPath);
+        await git.clone(repoUrl, outputPath);
+
+        // Get latest commit details
+        const commitDetails = await git.log([`${outputPath}/.git`]);
+        const latestCommit = commitDetails.latest;
+        const commitMessage = latestCommit?.message;
+        const commitTime = new Date(latestCommit?.date).toLocaleString();
+        
+        // Get the current branch
+        const currentBranch = await git.revparse(["--abbrev-ref", "HEAD"]);
 
         // Identify the project type
         const projectType = await getProjectType(outputPath);
@@ -64,12 +76,20 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
         }
 
         console.log(`${isRedeploy ? "Redeployment" : "Deployment"} complete for project: ${id}`);
-        return { status: isRedeploy ? "redeploying" : "deploying", type: projectType , folderToDeploy};
+        return { 
+            status: isRedeploy ? "redeploying" : "deploying", 
+            type: projectType,
+            folderToDeploy,
+            commitMessage,
+            commitTime,
+            currentBranch
+        };
     } catch (error) {
         console.error(`Error during ${isRedeploy ? "redeployment" : "deployment"} for project: ${id}`, error);
         throw error;
     }
 };
+
 // Add job processors
 buildQueue.process(async (job) => {
     const { id, repoUrl, userId , name} = job.data;
@@ -83,7 +103,10 @@ buildQueue.process(async (job) => {
                 repoUrl : repoUrl,
                 status: result.status || "deploying",
                 type,
-                name
+                name,
+                commit : result.commitMessage,
+                branch : result.currentBranch,
+                time : result.commitTime
             })
             if(project){
                 await listener.del(`projects:${userId.toLowerCase()}`)
