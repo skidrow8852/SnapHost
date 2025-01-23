@@ -59,7 +59,7 @@ export default async function Navbar() {
             </Button>
           </Link>
 
-          <NotificationDropdown>
+          <NotificationDropdown user={session?.user}>
             <Button className="bg-pink relative h-10 w-10 rounded-xl border border-[#D6DFE6] hover:bg-[rgba(182,187,191,0.1)]">
               <Bell color="#B6BBBF" fill="#B6BBBF" />
               <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-gradient-to-tr from-[#F876C0] to-[#FED90C]"></span>

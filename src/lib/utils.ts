@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
@@ -23,3 +26,25 @@ export function isValidGitHubUrl(url: string): boolean {
     return false; 
   }
 }
+
+
+export const generateToken = async (userId: string) => {
+  try {
+    const response = await fetch("/api/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const authToken = data.authToken;
+      return authToken;
+    }
+    return "";
+  } catch (e) {
+    return "";
+  }
+};

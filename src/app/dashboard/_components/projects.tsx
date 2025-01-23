@@ -1,14 +1,72 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 "use client"
 import { DialogDeploy } from '@/components/deploy-form'
+import PageSkeleton from '@/components/page-skeleton'
 import { Button } from '@/components/ui/button'
+import { useProjectStore } from '@/store/projects'
+import { usePersonStore } from '@/store/user'
 import { ArrowRight } from 'lucide-react'
 import Image from 'next/image'
 import React from 'react'
+import ProjectCard from './projectCard'
 
 function Projects() {
+const { token , id} = usePersonStore((state) => state)
+const projects = useProjectStore((state) => state.projects)
+const [isLoading, setIsLoading] = React.useState<boolean>(true);
+
+
+
+const getUserProjects = async (userId: string, tokenValue: string) => {
+  try {
+    const response = await fetch(
+      `${process.env.URL_BACKEND_ACCESS}/projects/${userId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${tokenValue}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json(); 
+    useProjectStore.getState().setProjects(data.result); 
+    setIsLoading(false)
+  } catch (e) {
+    console.error("Failed to fetch user projects:", e);
+    setIsLoading(false)
+  }
+};
+
+
+React.useEffect(() => {
+  if(token.length > 3){
+    getUserProjects(id, token)
+  }
+},[token,id])
+
+if(isLoading){
+  return (
+      <div className='flex justify-center items-center min-h-[70vh]'>
+        <PageSkeleton />
+      </div>
+    );
+}
+
+
   return (
     <div className='flex justify-center items-center min-h-[70vh]'>
-      <div className='text-center relative'>
+      
+      {projects.length > 0 ? <div className='text-center relative'>
+        <ProjectCard />
+      </div> : <div className='text-center relative'>
         <div className='relative'>
           <Image 
             src="/assets/project-bg.png" 
@@ -34,7 +92,7 @@ function Projects() {
                 </Button>
               </DialogDeploy>
         </div>
-      </div>
+      </div>}
     </div>
   )
 }
