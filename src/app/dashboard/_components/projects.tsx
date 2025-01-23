@@ -23,7 +23,7 @@ const [isLoading, setIsLoading] = React.useState<boolean>(true);
 const getUserProjects = async (userId: string, tokenValue: string) => {
   try {
     const response = await fetch(
-      `${process.env.URL_BACKEND_ACCESS}/projects/${userId}`,
+      `${process.env.NEXT_PUBLIC_URL_BACKEND_ACCESS}/projects/${userId}`,
       {
         headers: {
           Authorization: `Bearer ${tokenValue}`,
