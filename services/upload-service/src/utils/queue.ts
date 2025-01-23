@@ -23,7 +23,7 @@ const io = require("../socket/socket");
 
 
 // Function to deploy or redeploy a project
-const deployProject = async (id: string, repoUrl: string, isRedeploy = false) => {
+const deployProject = async (id: string, repoUrl: string, userId : string , isRedeploy = false) => {
     const outputPath = path.join(__dirname, `output/${id}`);
     const git = simpleGit();
     try {
@@ -69,6 +69,12 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
 
             folderToDeploy = distPath; 
         }
+        if(projectType == "unknown"){
+            notifyUser("type-unknown", userId, { id, message : `Project type 'Unknown' ${isRedeploy} failed` });
+            deleteFolder(folderToDeploy);
+            throw new Error("Project type 'Unknown'")
+
+        }
         const filesToUpload = getAllFiles(folderToDeploy);
         for (const file of filesToUpload) {
             const relativePath = file.slice(__dirname.length + 1);
@@ -90,29 +96,49 @@ const deployProject = async (id: string, repoUrl: string, isRedeploy = false) =>
     }
 };
 
+// Function to notify the user about deployment/redeployment process
+const notifyUser = (type : string, userId : string, message : any) => {
+    const userIds = io.getConnectedSocketIds();
+         // Emit success message to connected clients
+        if (userIds[userId?.toLowerCase()]) {
+            userIds[userId?.toLowerCase()]?.forEach(
+              (element: string) => {
+                io.getIO()
+                  .to(element)
+                  .emit(type, message);
+              },
+            );
+        }
+}
+
 // Add job processors
 buildQueue.process(async (job) => {
     const { id, repoUrl, userId , name} = job.data;
     try {
         console.log(`Processing deployment for project: ${id}`);
-        const result = await deployProject(id, repoUrl);
+        const result = await deployProject(id, repoUrl,userId);
         const type = result?.type || "unknown"
-        const project = await createProject({
-                userId : userId,
-                projectId : id,
-                repoUrl : repoUrl,
-                status: result.status || "deploying",
-                type,
-                name,
-                commit : result.commitMessage,
-                branch : result.currentBranch,
-                time : result.commitTime
-            })
-            if(project){
-                await listener.del(`projects:${userId.toLowerCase()}`)
-            }
+        
 
-        await processDeployQueue.add({ id, repoUrl, userId , type})
+            const project = await createProject({
+                    userId : userId,
+                    projectId : id,
+                    repoUrl : repoUrl,
+                    status: result.status || "deploying",
+                    type,
+                    name,
+                    commit : result.commitMessage,
+                    branch : result.currentBranch,
+                    time : result.commitTime
+                })
+                if(project){
+                    await listener.del(`projects:${userId.toLowerCase()}`)
+                }
+    
+            await processDeployQueue.add({ id, repoUrl, userId , type})
+        
+
+
         deleteFolder(result.folderToDeploy);
     }
     
@@ -126,22 +152,28 @@ redeployQueue.process(async (job) => {
     try {
         
         console.log(`Processing redeployment for project: ${id}`);
-        const result = await deployProject(id, repoUrl, true);
-        const type = result?.type || "unknown"
-        const project = await updateProject(userId,id,{
-                status: result?.status,
-                type
-            })
+        const result = await deployProject(id, repoUrl, userId,true);
+        const type = result?.type || "unknown";
+        
 
-            if(project){
-                await listener.del(`projects:${userId.toLowerCase()}`)
-            }
+
+            const project = await updateProject(userId,id,{
+                    status: result?.status,
+                    type
+                })
     
-        await processReDeployQueue.add({ id, repoUrl, userId , type})
+                if(project){
+                    await listener.del(`projects:${userId.toLowerCase()}`)
+                }
+        
+            await processReDeployQueue.add({ id, repoUrl, userId , type})
+        
+
         deleteFolder(result.folderToDeploy);
         
     }catch(error){
         console.error(`Error during task processing for project: ${id}`, error);
+        
     }
 });
 
@@ -156,7 +188,6 @@ resultQueue.process(async (job) => {
         throw new Error(errorMessage);
     }
 
-    const userIds = io.getConnectedSocketIds();
     try {
         const project = await updateProject(userId,id,{
                 status: 'deployed',
@@ -164,32 +195,13 @@ resultQueue.process(async (job) => {
             })
 
         if(project){
+                notifyUser("deploy-success", userId, { id, screenshot });
                 await listener.del(`projects:${userId.toLowerCase()}`)
             }
 
-        // Emit success message to connected clients
-        if (userIds[userId?.toLowerCase()]) {
-            userIds[userId?.toLowerCase()]?.forEach(
-              (element: string) => {
-                io.getIO()
-                  .to(element)
-                  .emit("deploy-success", { id, screenshot });
-              },
-            );
-        }
-
         console.log(`Project ${id} successfully deployed`);
     } catch (error) {
-        // Emit failure message to connected clients if error occurs
-        if (userIds[userId?.toLowerCase()]) {
-            userIds[userId?.toLowerCase()]?.forEach(
-              (element: string) => {
-                io.getIO()
-                  .to(element)
-                  .emit("deploy-failed", { error });
-              },
-            );
-        }
+        notifyUser("deploy-failed", userId, { id, error });
         console.error(`Error during task processing for project: ${id}`, error);
     }
 });

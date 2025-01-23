@@ -34,7 +34,7 @@ export const getProjectType = async (repoPath : string) => {
         return "unknown"; 
     } catch (error) {
         console.error("Error identifying project type:", error);
-        return "Unknown";  // Default case if an error occurs
+        return "unknown";  // Default case if an error occurs
     }
 };
 
