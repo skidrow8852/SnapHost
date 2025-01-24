@@ -20,6 +20,9 @@ export async function getAllProjects(userId: string) {
     where: {
       userId: userId,
     },
+    include: {
+      logs: true, 
+    },
     orderBy: {
       createdAt: "desc",
     },
