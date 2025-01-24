@@ -3,6 +3,7 @@ import { type ProjectCardTypes } from "@/lib/types";
 import { extractRepoDetails, timeAgo } from "@/lib/utils";
 import { CodeXml, GitBranch } from "lucide-react";
 import React from "react";
+import ProjectOptions from "./options";
 
 function ProjectCard({ values }: { values: ProjectCardTypes }) {
   return (
@@ -11,11 +12,14 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
         <div className="space-y-4 pb-8 pl-8 pr-8">
           {/* Header shimmer */}
           <div className="flex items-start justify-between">
+            <ProjectOptions values={values}>
+
             <div className="flex cursor-pointer items-center gap-1 pt-8">
               <div className="h-1.5 w-1.5 rounded-lg bg-[#D9D9D9]" />
               <div className="h-1.5 w-1.5 rounded-lg bg-[#D9D9D9]" />
               <div className="h-1.5 w-1.5 rounded-lg bg-[#D9D9D9]" />
             </div>
+            </ProjectOptions>
             <div className="mt-2 space-y-2 pt-16 flex justify-center items-center text-center">
               {values?.image && values?.image?.length > 2 ? (
                 <div
@@ -53,7 +57,7 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
                 : values.name}
             </div>
             <div className="font-publicSans text-sm font-[500] text-[#AEAEAE]">
-              <a href={`https://${values.projectId}.snaphost.co`}>
+              <a href={`https://${values.projectId}.snaphost.co`} target='_blank'>
                 {values.projectId}.snaphost.co
               </a>
             </div>

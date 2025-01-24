@@ -4,11 +4,18 @@ import { db } from "@/server/db";
 import redis from "@/lib/redis";
 
 export async function getAllProjects(userId: string) {
+
   const cachedProjects = await redis.get(`projects:${userId}`);
   if (cachedProjects) {
-    console.log("from cache");
-    return JSON.parse(cachedProjects);
+    console.log("Fetching from cache");
+    try {
+      return JSON.parse(cachedProjects); 
+    } catch (error) {
+      console.error("Error parsing cached data:", error);
+      return []; 
+    }
   }
+
 
   const data = await db.project.findMany({
     where: {
@@ -20,32 +27,35 @@ export async function getAllProjects(userId: string) {
   });
 
   if (!data || data.length === 0) {
-    return [];
+    return []; 
   }
 
-  await redis.set(`projects:${userId}`, JSON.stringify(data));
+  await redis.set(`projects:${userId}`, JSON.stringify(data), "EX", 3600 * 24); 
 
   return data;
 }
 
 // Delete a user project
-export async function deleteProject(userId: string, projectId: string) {
-  const project = await db.project.findUnique({
-    where: { userId, projectId },
-  });
+export async function deleteProject(userId: string, id: string, token: string) {
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_URL_BACKEND_ACCESS}/remove/user/${userId}/project/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
-  if (!project) {
-    return false;
-  }
+    if (!response.ok || response.status !== 200) {
+      throw new Error(`Error: ${response.status} ${response.statusText}`);
+    }
 
-  const deleted = await db.project.delete({
-    where: { projectId: projectId },
-  });
-
-  if (deleted) {
     await redis.del(`projects:${userId}`);
     return true;
+  } catch (error) {
+    console.error("Error deleting project:", error); 
+    return false; 
   }
-
-  return false;
 }
