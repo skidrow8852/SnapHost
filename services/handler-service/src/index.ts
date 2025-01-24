@@ -4,6 +4,7 @@ import { S3 } from "aws-sdk";
 import {listener} from "./redis"
 const mime = require('mime-types')
 import dotenv from "dotenv";
+import { trackPageView } from "./helpers";
 dotenv.config();
 const s3 = new S3({
     accessKeyId: process.env.ACCESS_KEY_ID,
@@ -68,8 +69,8 @@ app.get("/*", async (req, res) => {
         res.send(contents.Body);
 
         // Increment page view count in Redis
-        const redisKey = `pageViews:${id}`;
-        await listener.incr(redisKey);
+        
+        await trackPageView(id)
 
 
     } catch (error) {
