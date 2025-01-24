@@ -4,6 +4,7 @@ import { extractRepoDetails, timeAgo } from "@/lib/utils";
 import { CodeXml, GitBranch } from "lucide-react";
 import React from "react";
 import ProjectOptions from "./options";
+import Link from "next/link";
 
 function ProjectCard({ values }: { values: ProjectCardTypes }) {
   return (
@@ -20,6 +21,8 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
               <div className="h-1.5 w-1.5 rounded-lg bg-[#D9D9D9]" />
             </div>
             </ProjectOptions>
+            <Link href={`/dashboard/project/${values.projectId}`}>
+            
             <div className="mt-2 space-y-2 pt-16 flex justify-center items-center text-center">
               {values?.image && values?.image?.length > 2 ? (
                 <div
@@ -37,6 +40,8 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
                 </div>
               )}
             </div>
+            </Link>
+            <Link href={`/dashboard/project/${values.projectId}`}>
             <div className="relative mt-4 flex h-12 w-12  items-center justify-center rounded-full ">
               <img
                 src="assets/views.png"
@@ -45,16 +50,20 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
                 alt="views"
                 className="absolute inset-0 h-full w-full rounded-full object-cover"
               />
-              <span className="z-10 text-sm font-[600] font-publicSans text-[#3E4047]">68</span>
+              <span className="z-10 text-sm font-[600] font-publicSans text-[#3E4047]">1M</span>
             </div>
+            </Link>
           </div>
 
           {/* Title shimmer */}
           <div className="flex flex-col items-center justify-center">
             <div className="font-publicSans text-lg font-[600] text-[#3E4047]">
+              <Link href={`/dashboard/project/${values.projectId}`}>
+              
               {values.name && values.name.length > 30
                 ? `${values.name.slice(0, 30)}...`
                 : values.name}
+              </Link>
             </div>
             <div className="font-publicSans text-sm font-[500] text-[#AEAEAE]">
               <a href={`https://${values.projectId}.snaphost.co`} target='_blank'>
@@ -65,6 +74,8 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
 
           {/* Code block shimmer */}
           <div className="pl-2 pr-2">
+            <Link href={`/dashboard/project/${values.projectId}`}>
+            
             <div className="flex h-9 w-full items-center gap-x-3 rounded-xl border-[0.12rem] border-[#D6DFE6] bg-[#FFFFFF] pl-3">
               <svg
                 width="15"
@@ -87,8 +98,11 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
                 }
               </p>
             </div>
+            </Link>
             <div className="font-600 font-publicSans pt-8 text-sm text-[#AEAEAE] overflow-hidden text-ellipsis whitespace-nowrap">
+              <Link href={`/dashboard/project/${values.projectId}`}>
               {values.commit}
+              </Link>
             </div>
             <div className="font-600 font-publicSans flex items-center gap-x-2 text-sm text-[#AEAEAE] overflow-hidden text-ellipsis whitespace-nowrap">
               <p>{timeAgo(values.time)} on</p>

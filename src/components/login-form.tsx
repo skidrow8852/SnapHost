@@ -24,6 +24,7 @@ import React from "react";
 import { usePersonStore } from "@/store/user";
 import { useRouter } from "next/navigation";
 import { generateToken } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
 export function LoginForm({
   className,
@@ -65,10 +66,9 @@ export function LoginForm({
                 email: ctx.data.user.email,
                 token: response,
                 avatar: ctx.data.user.avatar || "",
-                id : ctx.data.user.id
+                id: ctx.data.user.id,
               });
 
-             
               setIsLoading(false);
             } else {
               toast({
@@ -104,9 +104,8 @@ export function LoginForm({
 
       await authClient.signIn.social({
         provider: "github",
-        callbackURL : "/dashboard"
+        callbackURL: "/dashboard",
       });
-      
     } catch (e) {
       toast({
         title: "An Error Occurred.",
@@ -124,9 +123,8 @@ export function LoginForm({
 
       await authClient.signIn.social({
         provider: "google",
-        callbackURL : "/dashboard"
+        callbackURL: "/dashboard",
       });
-
     } catch (e) {
       toast({
         title: "An Error Occurred.",
@@ -227,7 +225,10 @@ export function LoginForm({
                   )}
                 </div>
                 <Button disabled={isLoading} type="submit" className="w-full">
-                  Login
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  {isLoading ? "Logging in..." : "Login"}
                 </Button>
               </div>
               <div className="pt-6 text-center text-sm">

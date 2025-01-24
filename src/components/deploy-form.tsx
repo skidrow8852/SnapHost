@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
+  DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
@@ -21,6 +22,7 @@ import Link from "next/link";
 export function DialogDeploy({ children }: { children: React.ReactNode }) {
   const [name, setName] = React.useState<string>("");
   const [url, setUrl] = React.useState<string>("");
+  const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [validation, setValidation] = React.useState<
     Array<{ field: string; reason: string }>
   >([]);
@@ -66,13 +68,20 @@ export function DialogDeploy({ children }: { children: React.ReactNode }) {
   };
 
   const Submit = async () => {
-    const result = validateInputs();
-    if (result.isValid) {
-      console.log("valid");
-      setSuccess(true);
-      setProjectId("63456354jjjd");
-    } else {
-      setValidation(result.errors);
+    try {
+      setIsLoading(true);
+      const result = validateInputs();
+      if (result.isValid) {
+        console.log("valid");
+        setSuccess(true);
+        setProjectId("63456354jjjd");
+      } else {
+        setValidation(result.errors);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -80,10 +89,12 @@ export function DialogDeploy({ children }: { children: React.ReactNode }) {
     <Dialog onOpenChange={handleDialogClose}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:rounded-2xl md:rounded-2xl lg:rounded-2xl">
+        <DialogTitle className="hidden"></DialogTitle>
+        
         {success ? (
           <div className="flex w-full content-center items-center justify-center">
             <div
-              className="w-full mb-10 mt-10 text-center"
+              className="mb-10 mt-10 w-full text-center"
               style={{
                 backgroundImage: "url('/assets/success-bg.png')",
                 backgroundPosition: "center center",
@@ -91,6 +102,8 @@ export function DialogDeploy({ children }: { children: React.ReactNode }) {
                 backgroundSize: "contain",
               }}
             >
+              <DialogTitle>
+
               <div className="flex items-center justify-center pb-5">
                 <Image
                   src="/assets/success.png"
@@ -98,9 +111,9 @@ export function DialogDeploy({ children }: { children: React.ReactNode }) {
                   width={150}
                   height={100}
                   sizes="(max-width: 768px) 100vw"
-                  
                 />
               </div>
+              </DialogTitle>
               <p className="text-md mb-2 mt-4 font-wixMadefor font-semibold text-[#2A2C33]">
                 Project created successfully!
               </p>
@@ -197,9 +210,16 @@ export function DialogDeploy({ children }: { children: React.ReactNode }) {
               </DialogClose>
               <Button
                 onClick={Submit}
+                disabled={isLoading}
                 className="h-11 rounded-2xl bg-[#2A2C33] pl-5 pr-5"
               >
-                Deploy <ArrowRight color="white" />
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Deploy <ArrowRight color="white" className="ml-2" />
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </div>

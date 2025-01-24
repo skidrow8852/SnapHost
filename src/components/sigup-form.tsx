@@ -23,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { generateToken } from "@/lib/utils";
 import { usePersonStore } from "@/store/user";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 export function SignupForm({
   className,
@@ -51,7 +52,6 @@ export function SignupForm({
           password,
           name,
           callbackURL: "/dashboard",
-          
         },
         {
           onRequest: () => setIsLoading(true),
@@ -68,8 +68,7 @@ export function SignupForm({
                 id: ctx.data.user.id,
               });
 
-              
-              router.push('/dashboard');
+              router.push("/dashboard");
               setIsLoading(false);
             } else {
               toast({
@@ -234,7 +233,10 @@ export function SignupForm({
                   )}
                 </div>
                 <Button disabled={isLoading} type="submit" className="w-full">
-                  Sign up
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : null}
+                  {isLoading ? "Signing up..." : "Sign up"}
                 </Button>
               </div>
             </form>
