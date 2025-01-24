@@ -33,6 +33,20 @@ CREATE TABLE "project" (
 );
 
 -- CreateTable
+CREATE TABLE "project_view" (
+    "id" SERIAL NOT NULL,
+    "project_id" TEXT NOT NULL,
+    "view_count" INTEGER NOT NULL,
+    "time_interval" TEXT NOT NULL,
+    "start_time" TIMESTAMP(3) NOT NULL,
+    "end_time" TIMESTAMP(3) NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "project_view_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "notification" (
     "id" TEXT NOT NULL,
     "value" TEXT NOT NULL,
@@ -115,6 +129,9 @@ CREATE UNIQUE INDEX "session_token_key" ON "session"("token");
 
 -- AddForeignKey
 ALTER TABLE "project" ADD CONSTRAINT "project_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "project_view" ADD CONSTRAINT "project_view_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "project"("projectId") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "notification" ADD CONSTRAINT "notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
