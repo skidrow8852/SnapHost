@@ -36,7 +36,7 @@ export async function getAllProjects(userId: string) {
 }
 
 // Delete a user project
-export async function deleteProject(userId: string, id: string, token: string) {
+export async function deleteUserProject(userId: string, id: string, token: string) {
   try {
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_URL_BACKEND_ACCESS}/remove/user/${userId}/project/${id}`,
@@ -49,7 +49,7 @@ export async function deleteProject(userId: string, id: string, token: string) {
     );
 
     if (!response.ok || response.status !== 200) {
-      throw new Error(`Error: ${response.status} ${response.statusText}`);
+      return false;
     }
 
     await redis.del(`projects:${userId}`);
