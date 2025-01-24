@@ -7,7 +7,6 @@ import { getAllFiles } from "./file";
 import { uploadFile } from "./aws";
 import { deleteFolder, getProjectType } from "./utils";
 import { createProject, updateProject } from "../client/client";
-import { listener } from "../database/redis";
 
 dotenv.config();
 const Queue = require ("bull");
@@ -139,7 +138,7 @@ buildQueue.process(async (job) => {
                 time: result.commitTime,
             });
 
-            if (project) await listener.del(`projects:${userId.toLowerCase()}`);
+            
             await processDeployQueue.add({ id, repoUrl, userId, type: result.type });
             deleteFolder(result.folderToDeploy);
         } catch (error) {
@@ -157,7 +156,6 @@ redeployQueue.process(async (job) => {
                 type: result.type,
             });
 
-            if (project) await listener.del(`projects:${userId.toLowerCase()}`);
             await processReDeployQueue.add({ id, repoUrl, userId, type: result.type });
             deleteFolder(result.folderToDeploy);
         } catch (error) {
@@ -178,7 +176,6 @@ resultQueue.process(async (job) => {
             const project = await updateProject(userId, id, { status: "deployed", screenshot });
             if (project) {
                 notifyUser("deploy-success", userId, { id, screenshot });
-                await listener.del(`projects:${userId.toLowerCase()}`);
             }
         } catch (error) {
             notifyUser("deploy-failed", userId, { id, error });
