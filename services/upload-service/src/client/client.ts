@@ -19,6 +19,21 @@ export async function createProject(fields : any) {
   }
 }
 
+export async function createNotification(fields : any) {
+  try {
+    const notification = await prisma.notification.create({
+      data: fields
+    });
+
+    return notification;
+  } catch (error) {
+    console.error("Error creating project:", error);
+    throw error;
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 
 export async function updateProject(userId: string, id: string, updatedFields: Partial<{ status: string , type : string, screenshot : string}>) {
   try {

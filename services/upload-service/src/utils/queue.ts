@@ -6,7 +6,8 @@ import simpleGit from "simple-git";
 import { getAllFiles } from "./file";
 import { uploadFile } from "./aws";
 import { deleteFolder, getProjectType } from "./utils";
-import { createProject, updateProject } from "../client/client";
+import { createNotification, createProject, updateProject } from "../client/client";
+import { listener } from "../database/redis";
 
 dotenv.config();
 const Queue = require ("bull");
@@ -138,9 +139,13 @@ buildQueue.process(async (job) => {
                 time: result.commitTime,
             });
 
-            
-            await processDeployQueue.add({ id, repoUrl, userId, type: result.type });
+            if(project){
+
+                await processDeployQueue.add({ id, repoUrl, userId, type: result.type });
+                await listener.del(`projects:${userId}`);
+            }
             deleteFolder(result.folderToDeploy);
+
         } catch (error) {
             console.error(`Error processing deployment for project: ${id}`, error);
         }
@@ -155,8 +160,11 @@ redeployQueue.process(async (job) => {
                 status: result.status,
                 type: result.type,
             });
+            if(project){
 
-            await processReDeployQueue.add({ id, repoUrl, userId, type: result.type });
+                await processReDeployQueue.add({ id, repoUrl, userId, type: result.type });
+                await listener.del(`projects:${userId}`);
+            }
             deleteFolder(result.folderToDeploy);
         } catch (error) {
             console.error(`Error processing redeployment for project: ${id}`, error);
@@ -176,6 +184,10 @@ resultQueue.process(async (job) => {
             const project = await updateProject(userId, id, { status: "deployed", screenshot });
             if (project) {
                 notifyUser("deploy-success", userId, { id, screenshot });
+                await listener.del(`projects:${userId}`);
+                await createNotification({userId, value : `Project ${project.name} deployed successfully` })
+                await listener.del(`notifications:${userId}`)
+
             }
         } catch (error) {
             notifyUser("deploy-failed", userId, { id, error });

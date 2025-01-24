@@ -7,7 +7,6 @@ export async function getAllProjects(userId: string) {
 
   const cachedProjects = await redis.get(`projects:${userId}`);
   if (cachedProjects) {
-    console.log("Fetching from cache");
     try {
       return JSON.parse(cachedProjects); 
     } catch (error) {
