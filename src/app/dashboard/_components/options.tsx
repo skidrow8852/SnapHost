@@ -75,13 +75,15 @@ function ProjectOptions({
         if (!token) {
             throw new Error("Token is required for redeploy.");
         }
-        const data = await deleteUserProject(values.userId, values.id,token)
-        if(data){
-            deleteProject(values.projectId);
+        deleteProject(values.projectId);
             toast({
                 title: "Project deleted successfully!",
                 description: "Project no longer available",
             });
+
+        const data = await deleteUserProject(values.userId, values.id,token)
+        if(data){
+            return
         }else{
             toast({
                 title: "Error deleting project",

@@ -51,7 +51,9 @@ export default function Search() {
       urlParams.delete("search"); 
     }
 
-    window.history.pushState({}, "", "?" + urlParams.toString());
+     const newUrl = "?" + urlParams.toString();
+     const cleanUrl = newUrl === "?" ? window.location.pathname : newUrl;
+     window.history.pushState({}, "", cleanUrl);
   }, [searchQuery]);
 
   return (

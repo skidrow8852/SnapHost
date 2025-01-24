@@ -185,8 +185,10 @@ resultQueue.process(async (job) => {
             if (project) {
                 notifyUser("deploy-success", userId, { id, screenshot });
                 await listener.del(`projects:${userId}`);
-                await createNotification({userId, value : `Project ${project.name} deployed successfully` })
-                await listener.del(`notifications:${userId}`)
+                let notif = await createNotification({userId, value : `Project ${project.name} deployed successfully` })
+                if(notif){
+                    await listener.del(`notifications:${userId}`)
+                }
 
             }
         } catch (error) {
