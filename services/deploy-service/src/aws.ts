@@ -139,3 +139,95 @@ export async function removeProjectFolderFromS3(projectId: string) {
         console.error("Error removing source code from S3:", error);
     }
 }
+
+
+// Remove a folder inside the project folder
+export async function deleteFolderFromS3(folderPath: string) {
+    try {
+        // List all objects in the folder
+        const listParams = {
+            Bucket: "snaphost",
+            Prefix: folderPath,
+        };
+
+        const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+        if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
+            console.log(`No objects found in folder ${folderPath}.`);
+            return;
+        }
+
+        // Prepare the list of objects to delete
+        const deleteParams = {
+            Bucket: "snaphost",
+            Delete: {
+                Objects: listedObjects.Contents.map(({ Key }) => ({ Key })),
+            },
+        };
+
+        // Delete the objects
+        await s3.deleteObjects(deleteParams).promise();
+        console.log(`Deleted ${listedObjects.Contents.length} objects from folder ${folderPath}.`);
+    } catch (error) {
+        console.error(`Error deleting folder ${folderPath} from S3:`, error);
+        throw error;
+    }
+}
+
+
+// check if a specific folder exists
+export async function folderExistsInS3(folderPath: string): Promise<boolean> {
+    try {
+        const listParams = {
+            Bucket: "snaphost",
+            Prefix: folderPath,
+            MaxKeys: 1, 
+        };
+
+        const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+        // If Contents array is not empty, the folder exists
+        return !!listedObjects.Contents && listedObjects.Contents.length > 0;
+    } catch (error) {
+        console.error(`Error checking if folder ${folderPath} exists in S3:`, error);
+        throw error;
+    }
+}
+
+// rename a folder in S3
+export async function renameFolderInS3(sourceFolderPath: string, destinationFolderPath: string) {
+    try {
+        // List all objects in the source folder
+        const listParams = {
+            Bucket: "snaphost",
+            Prefix: sourceFolderPath,
+        };
+
+        const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+        if (!listedObjects.Contents || listedObjects.Contents.length === 0) {
+            console.log(`No objects found in source folder ${sourceFolderPath}.`);
+            return;
+        }
+
+        // Copy each file from the source folder to the destination folder
+        for (const { Key } of listedObjects.Contents) {
+            const destinationKey = Key!.replace(sourceFolderPath, destinationFolderPath);
+
+            await s3.copyObject({
+                Bucket: "snaphost",
+                CopySource: `snaphost/${Key}`,
+                Key: destinationKey,
+            }).promise();
+
+            console.log(`Copied file: ${Key} -> ${destinationKey}`);
+        }
+
+        // Delete the source folder
+        await deleteFolderFromS3(sourceFolderPath);
+        console.log(`Deleted source folder: ${sourceFolderPath}.`);
+    } catch (error) {
+        console.error(`Error renaming folder ${sourceFolderPath} to ${destinationFolderPath}:`, error);
+        throw error;
+    }
+}

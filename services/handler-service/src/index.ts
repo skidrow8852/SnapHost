@@ -32,16 +32,16 @@ app.get("/*", async (req, res) => {
         if (filePath === "/" || !filePath.includes(".")) {
             filePath = "/index.html";
         }
-        let folderName = 'dist'
+
+        let folderName = 'dist';
 
         // Fetch the file from the S3 'dist' folder first
         let contents = await getS3Object(id, filePath, folderName);
 
         // If the file was not found in the 'dist' folder, try the 'build' folder
         if (!contents) {
-            folderName = 'build'
-            contents = await getS3Object(id, filePath, "build");
-            
+            folderName = 'build';
+            contents = await getS3Object(id, filePath, folderName);
         }
 
         // Handle missing files
@@ -61,7 +61,7 @@ app.get("/*", async (req, res) => {
         const contentType = mime.lookup(filePath) || "application/octet-stream";
         res.set("Content-Type", contentType);
 
-        // Add Cache-Control headers for static assets
+        // Cache-Control headers for static assets
         if ([".js", ".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico"].includes(filePath.slice(filePath.lastIndexOf(".")))) {
             res.set("Cache-Control", "public, max-age=2592000"); // Cache for 1 month
         }
@@ -69,10 +69,7 @@ app.get("/*", async (req, res) => {
         res.send(contents.Body);
 
         // Increment page view count in Redis
-        
-        await trackPageView(id)
-
-
+        await trackPageView(id);
     } catch (error) {
         console.error("Error handling request:", error);
         if (error.code === "NoSuchKey") {
@@ -84,19 +81,37 @@ app.get("/*", async (req, res) => {
 });
 
 // Helper function to fetch object from S3
-async function getS3Object(id : string, filePath : string, folder : string) {
+async function getS3Object(id: string, filePath: string, folder: string) {
     try {
+        // Try fetching the file from the final folder first
+        const finalKey = `${id}/${folder}${filePath}`;
         const response = await s3
             .getObject({
                 Bucket: "snaphost",
-                Key: `${id}/${folder}${filePath}`,
+                Key: finalKey,
             })
             .promise();
 
         return response;
     } catch (error) {
         if (error.code === "NoSuchKey") {
-            return null; 
+            // If the file is not found in the final folder, try the temporary folder
+            const tempKey = `${id}/temp-${folder}${filePath}`;
+            try {
+                const tempResponse = await s3
+                    .getObject({
+                        Bucket: "snaphost",
+                        Key: tempKey,
+                    })
+                    .promise();
+
+                return tempResponse;
+            } catch (tempError) {
+                if (tempError.code === "NoSuchKey") {
+                    return null; 
+                }
+                throw tempError;
+            }
         }
         throw error; 
     }
