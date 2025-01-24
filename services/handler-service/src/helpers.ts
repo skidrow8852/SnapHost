@@ -22,7 +22,6 @@ export async function trackPageView(projectId: string) {
     pipeline.incr(`pageViews:weekly:${projectId}:${weekStartDate}`);
     pipeline.incr(`pageViews:monthly:${projectId}:${monthStartDate}`);
     pipeline.incr(`pageViews:yearly:${projectId}:${yearStartDate}`);
-    pipeline.incr(`pageViews:lifetime:${projectId}`);
 
     // Set expiration for non-lifetime keys (e.g., 30 days for daily keys)
     pipeline.expire(`pageViews:daily:${projectId}:${date}`, 30 * 24 * 60 * 60);

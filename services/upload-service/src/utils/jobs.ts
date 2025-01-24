@@ -59,11 +59,6 @@ export async function storeProjectViews() {
           endTime.setHours(23, 59, 59, 999);
           break;
 
-        case "lifetime":
-          startTime = new Date(0);
-          endTime = new Date();
-          break;
-
         default:
           console.error(`Unsupported interval: ${interval}`);
           continue;
