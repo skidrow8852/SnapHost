@@ -199,36 +199,6 @@ app.post("/api/redeploy", verifyUserAccessToken, async (req, res) => {
 });
 
 
-// delete a project
-app.delete("/api/remove/user/:userId/project/:id", verifyUserAccessToken, async (req, res) => {
-    try {
-        if (req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
-            return res.status(401).json({ error: "Unauthorized" });
-        }
-
-        const project = await prisma.project.findUnique({
-            where: { userId: req.params?.userId , id : req.params?.id},
-        });
-
-        if (!project) {
-            return res.status(404).json({ error: "Project not found" });
-        }
-
-        await prisma.project.delete({
-            where: { id: req.params?.id },
-        });
-
-        const redisKey = `pageViews:${project.projectId}`;
-        res.status(200).json({ result: "Project deleted successfully" });
-        await listener.del(redisKey);
-        await processRemoveProject.add({id : project.projectId})
-
-    } catch (error) {
-        console.error("Error fetching project status:", error);
-        res.status(500).json({ error: "Failed to fetch project status" });
-    }
-});
-
 // Revoke token
 app.post("/api/revoke", verifyUserAccessToken, async (req, res) => {
     try {

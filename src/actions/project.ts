@@ -1,4 +1,4 @@
-"use server"
+"use server";
 import { db } from "@/server/db";
 
 // get all user projects
@@ -16,4 +16,25 @@ export async function getAllProjects(userId: string) {
   }
 
   return data;
+}
+
+// Delete a user Project
+export async function deleteProject(userId: string, projectId: string) {
+  const project = await db.project.findUnique({
+    where: { userId, projectId },
+  });
+
+  if (!project) {
+    return false;
+  }
+
+  const deleted = await db.project.delete({
+    where: { projectId: projectId },
+  });
+
+  if (deleted) {
+    return true;
+  }
+
+  return false;
 }

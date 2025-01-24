@@ -65,10 +65,9 @@ function NotificationDropdown({ user }: NotificationDropdownProps) {
   // Mark all notifications as read
   const handleMarkAllAsRead = async () => {
     try {
-      const data = await markAllNotificationAsRead(user.id);
-      if (data) {
-        clearNotifications();
-      }
+      clearNotifications();
+      await markAllNotificationAsRead(user.id);
+      
     } catch (error) {
       console.error("Error marking notifications as read:", error);
     }
@@ -96,11 +95,14 @@ function NotificationDropdown({ user }: NotificationDropdownProps) {
         <DropdownMenuTrigger asChild>
           <Button className="bg-pink relative h-10 w-10 rounded-xl border border-[#D6DFE6] hover:bg-[rgba(182,187,191,0.1)]">
             <Bell color="#B6BBBF" fill="#B6BBBF" />
-            <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-gradient-to-tr from-[#F876C0] to-[#FED90C]"></span>
+            {notifications?.length !== 0 &&
+            notifications?.findIndex((notif) => notif?.isRead == false) !== -1 &&
+              <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-gradient-to-tr from-[#F876C0] to-[#FED90C]"></span>
+            }
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="flex max-h-[400px] min-h-[300px] w-80 flex-col overflow-hidden rounded-2xl">
-          <div className="flex-1 gap-4 overflow-auto p-4">
+          <div className="flex-1 gap-4 overflow-auto p-4 pl-8">
             <h4 className="pb-4 font-medium leading-none">Notifications</h4>
             {notifications?.length == 0 ? (
               <div className="flex min-h-[200px] items-center justify-center text-center">
@@ -138,7 +140,10 @@ function NotificationDropdown({ user }: NotificationDropdownProps) {
           </div>
           <div className="mt-2 flex justify-center pb-2">
             <Button
-              disabled={notifications?.length == 0}
+              disabled={
+                notifications?.length == 0 ||
+                notifications.findIndex((notif) => notif?.isRead == false) == -1
+              }
               variant="outline"
               className="w-[80%] rounded-xl bg-[#2A2C33] text-white hover:bg-[black] hover:text-white"
               onClick={handleMarkAllAsRead}
