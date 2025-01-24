@@ -12,31 +12,20 @@ import { ArrowRight } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 import ProjectCard from "./projectCard";
+import { getAllProjects } from "@/actions/project";
 
 function Projects() {
-  const { token, id } = usePersonStore((state) => state);
+  const { id } = usePersonStore((state) => state);
   const projects = useProjectStore((state) => state.filteredProjects);
   const allprojects = useProjectStore((state) => state.projects);
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
 
-  const getUserProjects = async (userId: string, tokenValue: string) => {
+  const getUserProjects = async (userId: string) => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_URL_BACKEND_ACCESS}/projects/${userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${tokenValue}`,
-            "Content-Type": "application/json",
-          },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`);
+      const response = await getAllProjects(userId);
+      if (response.length > 0) {
+        useProjectStore.getState().setProjects(response);
       }
-
-      const data = await response.json();
-      useProjectStore.getState().setProjects(data.result);
       setIsLoading(false);
     } catch (e) {
       console.error("Failed to fetch user projects:", e);
@@ -45,10 +34,8 @@ function Projects() {
   };
 
   React.useEffect(() => {
-    if (token.length > 3) {
-      getUserProjects(id, token);
-    }
-  }, [token, id]);
+    getUserProjects(id);
+  }, [id]);
 
   if (isLoading) {
     return (

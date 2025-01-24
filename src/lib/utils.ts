@@ -64,21 +64,21 @@ export function timeAgo(dateString: string): string {
 
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) {
-        return `${diffInHours} h ago`;
+        return `${diffInHours} ${diffInHours > 1 ? "hours" : "hour"} ago`;
     }
 
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 30) {
-        return `${diffInDays} d ago`;
+        return `${diffInDays} ${diffInDays > 1 ? "days" : "day"} ago`;
     }
 
     const diffInMonths = Math.floor(diffInDays / 30);
     if (diffInMonths < 12) {
-        return `${diffInMonths} m ago`;
+        return `${diffInMonths} ${diffInMonths > 1 ? "months" : "month"} ago`;
     }
 
     const diffInYears = Math.floor(diffInMonths / 12);
-    return `${diffInYears} y ago`;
+    return `${diffInYears} ${diffInYears > 1 ? "years" : "year"} ago`;
   }catch(e){
     return dateString
   }

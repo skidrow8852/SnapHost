@@ -198,41 +198,6 @@ app.post("/api/redeploy", verifyUserAccessToken, async (req, res) => {
     }
 });
 
-// Get all user projects
-app.get("/api/projects/:userId", verifyUserAccessToken, async (req, res) => {
-    try {
-        if (req.params?.userId?.toLowerCase() !== req.payload?.id?.toLowerCase()) {
-            return res.status(401).json({ error: "Unauthorized" });
-        }
-        const key = `projects:${req.params?.userId?.toLowerCase()}`
-        const value = await listener.get(key);
-            if (value) {
-                const data = JSON.parse(value);
-                return res.send({result : data});
-            }
-
-        const projects = await getUserProjects(req.params?.userId)
-
-        const projectsWithViewCount = await Promise.all(
-            projects?.map(async (project) => {
-                const redisKey = `pageViews:${project.id}`;
-                const viewCount = await listener.get(redisKey); 
-
-                // Convert the view count to a number
-                const views = viewCount ? parseInt(viewCount, 10) : 0;
-
-                return { ...project, view: views };
-            }) || []
-        );
-        
-        await listener.set(key, JSON.stringify(projectsWithViewCount))
-        res.send({ result: projectsWithViewCount });
-    } catch (error) {
-        console.error("Error fetching project status:", error);
-        res.status(500).json({ error: "Failed to fetch project status" });
-    }
-});
-
 
 // delete a project
 app.delete("/api/remove/user/:userId/project/:id", verifyUserAccessToken, async (req, res) => {
