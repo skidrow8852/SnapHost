@@ -12,7 +12,7 @@ export interface ProjectCardTypes {
   views?: number;
   time: string;
   type: string;
-  status: string;
+  status: string; 
   logs?: Record<string | number | symbol, undefined>[];
 }
 

@@ -27,6 +27,7 @@ CREATE TABLE "project" (
     "time" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "status" TEXT NOT NULL,
+    "views" INTEGER DEFAULT 0,
 
     CONSTRAINT "project_pkey" PRIMARY KEY ("id")
 );
@@ -50,6 +51,7 @@ CREATE TABLE "log" (
     "projectId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "type" TEXT NOT NULL,
 
     CONSTRAINT "log_pkey" PRIMARY KEY ("id")
 );
