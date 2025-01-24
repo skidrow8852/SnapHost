@@ -35,6 +35,7 @@ export async function createNotification(fields : any) {
 }
 
 
+
 export async function updateProject(userId: string, id: string, updatedFields: Partial<{ status: string , type : string, screenshot : string}>) {
   try {
     const updatedProject = await prisma.project.update({

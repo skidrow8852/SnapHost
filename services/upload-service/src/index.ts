@@ -33,6 +33,16 @@ app.use(compression({ level: 6, threshold: 0 }));
 
 app.disable("x-powered-by");
 
+// Connect to Redis 
+(async () => {
+    try {
+        await listener.connect();
+        console.log("Connected to Redis");
+    } catch (connectionError) {
+        console.error("Error connecting to Redis:", connectionError);
+    }
+})();
+
 
 const rateLimitMiddleware = setRateLimit({
   windowMs: 60 * 1000,
@@ -105,15 +115,7 @@ app.use(helmet.referrerPolicy({ policy: "same-origin" }));
 app.use(helmet.xssFilter());
 
 
-// Connect to Redis 
-(async () => {
-    try {
-        await listener.connect();
-        console.log("Connected to Redis");
-    } catch (connectionError) {
-        console.error("Error connecting to Redis:", connectionError);
-    }
-})();
+
 
 ////// ************************ Routes **********************************
 
@@ -264,6 +266,10 @@ const server = require("http").createServer(app);
 
 // Initializing the Socket
 require("./socket/socket").init(server);
+
+// init Cronjob
+require("./utils/jobs");
+
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
