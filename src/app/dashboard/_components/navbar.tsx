@@ -1,9 +1,9 @@
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import Image from "next/image";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {  LogOut, Settings } from "lucide-react";
 import {
   DropdownMenu,
@@ -11,9 +11,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 
-import Upgrade from "./ui/upgrade";
+import Upgrade from "@/components/ui/upgrade";
 import Link from "next/link";
 import NotificationDropdown from "./notification";
 import {
@@ -25,8 +25,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
-import SettingsForm from "./settings-form";
+} from "@/components/ui/dialog";
+import SettingsForm from "@/components/settings-form";
 
 export default async function Navbar() {
   const session = await auth.api.getSession({

@@ -7,8 +7,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { Button } from "./ui/button";
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 import { usePersonStore } from "@/store/user";
 import { generateToken, timeAgo } from "@/lib/utils";
 import { useNotificationstore } from "@/store/notification";

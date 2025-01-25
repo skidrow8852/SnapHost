@@ -1,11 +1,11 @@
 
 
 import { DialogDeploy } from "@/components/deploy-form";
-import Search from "@/components/search";
+import Search from "./_components/search";
 import { Button } from "@/components/ui/button";
 import Projects from "./_components/projects";
 import { Plus } from "lucide-react";
-import Sortby from "@/components/sortby";
+import Sortby from "./_components/sortby";
 
 export default function DashboardPage() {
 

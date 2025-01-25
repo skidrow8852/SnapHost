@@ -1,6 +1,6 @@
 "use client";
 import { type JSX, type SVGProps, useState, useEffect, useMemo } from "react";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/input";
 import { useProjectStore } from "@/store/projects";
 
 export default function Search() {
