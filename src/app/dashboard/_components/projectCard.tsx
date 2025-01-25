@@ -9,9 +9,17 @@ import Link from "next/link";
 function ProjectCard({ values }: { values: ProjectCardTypes }) {
   return (
     <div className="group relative">
-      <div className="h-[340px] overflow-hidden rounded-3xl border-[0.15rem] border-[#D6DFE6] bg-[#FFFFFF]">
+      
+
+      {/* Card container */}
+      <div
+  className="relative h-[340px] overflow-hidden rounded-3xl border-[0.15rem] border-[#D6DFE6] bg-[#FFFFFF] transition-all duration-300 group-hover:scale-105 
+             before:absolute before:inset-0 before:rounded-3xl before:bg-gradient-to-bl before:from-[#FFFFFF] before:via-[#f9f9f9] before:to-[#FFFFFF] 
+             before:opacity-0 before:transition-opacity before:duration-400 hover:before:opacity-100 before:-z-10"
+>
+        
         <div className="space-y-4 pb-8 pl-8 pr-8">
-          {/* Header shimmer */}
+          {/* Header */}
           <div className="flex items-start justify-between">
             <ProjectOptions values={values}>
 
@@ -55,7 +63,7 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
             </Link>
           </div>
 
-          {/* Title shimmer */}
+          {/* Title */}
           <div className="flex flex-col items-center justify-center">
             <div className="font-publicSans text-lg font-[600] text-[#3E4047]">
               <Link href={`/dashboard/project/${values.projectId}`}>
@@ -72,7 +80,7 @@ function ProjectCard({ values }: { values: ProjectCardTypes }) {
             </div>
           </div>
 
-          {/* Code block shimmer */}
+          {/* block info */}
           <div className="pl-2 pr-2">
             <Link href={`/dashboard/project/${values.projectId}`}>
             
