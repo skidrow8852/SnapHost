@@ -1,5 +1,11 @@
+import { type Metadata } from "next";
 import Navbar from "./_components/navbar";
 import Image from "next/image";
+
+
+export const metadata: Metadata = {
+  title: 'SnapHost - Dashboard', 
+};
 
 export default function RootLayout({
   children,
