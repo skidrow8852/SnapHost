@@ -1,5 +1,6 @@
 # SnapHost  (work in progress)
 Snaphost is a hosting platform that allows users to deploy their websites fast and easy and go from code to live site in seconds—no technical setup, no complex configurations.
+It is still work in progress, and will be ready in production as soon as the UI will be finished (Approximately 2 weeks).
 
 ![snaphost-2uJORRQl](https://github.com/user-attachments/assets/d9016653-b88a-49d7-81f2-d58a69880eda)
 
